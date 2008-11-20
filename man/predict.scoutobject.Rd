@@ -30,8 +30,8 @@ predict.scoutobject(object, newx, ...)
     nrow(newx)xlength(lam1s)xlength(lam2s) will be returned.}
 }
 \references{Witten, DM and Tibshirani, R (2008) Covariance-regularized
-  regression and classification for high-dimensional problems. {\it Journal
-  of the Royal Statistical Society, Series B}. To appear. <http://www-stat.stanford.edu/~dwitten>}
+  regression and classification for high-dimensional problems.  Journal
+  of the Royal Statistical Society, Series B 71(3): 615-636. <http://www-stat.stanford.edu/~dwitten>}
 \author{Daniela M. Witten and Robert Tibshirani}
 \note{ 
 }

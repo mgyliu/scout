@@ -1,30 +1,30 @@
 \name{crossProdLasso}
 \alias{crossProdLasso}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{Performs the lasso on the cross product matrices $X'X$ and $X'y$}
-\description{Perform L1-regularized regression of $y$ onto $X$ using only
-  the cross-product matrices $X'X$ and $X'y$. In the case of
+\title{Performs the lasso on the cross product matrices X'X and X'y}
+\description{Perform L1-regularized regression of y onto X using only
+  the cross-product matrices X'X and X'y. In the case of
   covariance-regularized regression, this is useful if you would like to
   try out something other than L1 or L2 regularization of the inverse
   covariance matrix.
  
   Suppose you
-  use your own method to regularize $X'X$. Then let $\Sigma$ denote your estimate of the population covariance matrix.  Now say you want to minimize
-  $\beta' \Sigma  \beta - 2 \beta' X'y + \lambda ||\beta||_1$
-in order to get the regression estimate $\beta$, which maximizes the
-second scout criterion when an $L_1$ penalty is used. You can do this by
-calling crossProdLasso($Sigma$, $X'y$,rho).
+  use your own method to regularize X'X. Then let Sigma denote your estimate of the population covariance matrix.  Now say you want to minimize
+  beta' Sigma  beta - 2 beta' X'y + lambda ||beta||_1
+in order to get the regression estimate beta, which maximizes the
+second scout criterion when an L_1 penalty is used. You can do this by
+calling crossProdLasso(Sigma, X'y,rho).
 
-If you run crossProdLasso($X'X$,$X'y$,rho) then it should give the same
-result as lars($X$,$y$)
+If you run crossProdLasso(X'X,X'y,rho) then it should give the same
+result as lars(X,y)
 }
 \usage{
 crossProdLasso(xtx,xty,rho,thr=1e-4,maxit=100,beta.init=NULL)
 }
 \details{
-If your xtx is simply $X'X$ for some $X$, and your xty is simple $X'y$
-with some $y$, then the results will be the same as running lars on data
-$(X,y)$ for a single shrinkage parameter value.
+If your xtx is simply X'X for some X, and your xty is simple X'y
+with some y, then the results will be the same as running lars on data
+(X,y) for a single shrinkage parameter value.
 
 Note that when you use the scout function with p2=1, the crossProdLasso
 function is
@@ -35,7 +35,7 @@ function is
 \arguments{
   \item{xtx}{A pxp matrix, which should be an estimate of a covariance
     matrix.}
-  \item{xty}{A px1 vector, which is generally obtained via $X'y$.}
+  \item{xty}{A px1 vector, which is generally obtained via X'y.}
   \item{rho}{Must be non-negative; the regularization parameter you are
     using. }
   \item{thr}{Convergence threshold.}
@@ -48,8 +48,8 @@ function is
   \item{beta}{A px1 vector with the regression coefficients.}
 }
 \references{Witten, DM and Tibshirani, R (2008) Covariance-regularized
-  regression and classification for high-dimensional problems. {\it Journal
-  of the Royal Statistical Society, Series B}. To appear. <http://www-stat.stanford.edu/~dwitten>}
+  regression and classification for high-dimensional problems. Journal
+  of the Royal Statistical Society, Series B 71(3): 615-636. <http://www-stat.stanford.edu/~dwitten>}
 \author{FORTRAN code by Jerry Friedman.   R interface by Daniela M. Witten and Robert Tibshirani}
 \note{The FORTRAN code that this function links to was kindly written
   and provided by Jerry Friedman.
@@ -67,10 +67,10 @@ print(scout.out)
 # Now, suppose I want to do develop a covariance-regularized regression
 # method as in Section 3.2 of Witten and Tibshirani (2008). It will work
 # like this:
-# 1. Estimate $\Sigma$ by hard-thresholding $X'X$
-# 2. Find $\beta$ by minimize $\beta^T \Sigma \beta - 2 \beta^T X^T y +
-# \lamda ||\beta||_1$
-# 3. Re-scale $\beta$.
+# 1. Estimate Sigma by hard-thresholding X'X
+# 2. Find \beta by minimize \beta^T \Sigma \beta - 2 \beta^T X^T y +
+# \lamda ||\beta||_1
+# 3. Re-scale \beta.
 
 # Step 1:
 regcovx <- cov(x2)*(abs(cov(x2))>.05)

@@ -58,8 +58,8 @@ nrow(x)}
   \item{lam2s}{Values of lam2 considered.}
 }
 \references{Witten, DM and Tibshirani, R (2008) Covariance-regularized
-  regression and classification for high-dimensional problems. {\it Journal
-  of the Royal Statistical Society, Series B}. To appear. <http://www-stat.stanford.edu/~dwitten>}
+  regression and classification for high-dimensional problems. Journal
+  of the Royal Statistical Society, Series B 71(3): 615-636. <http://www-stat.stanford.edu/~dwitten>}
 \author{Daniela M. Witten and Robert Tibshirani}
 \note{ 
 }

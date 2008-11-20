@@ -23,7 +23,7 @@ scout(x,y,newx,p1=2,p2=1,lam1s=seq(.001,.2,len=10),lam2s=seq(.001,.2,len=10),res
     the columns are the predictors}
   \item{y}{A matrix of observations, where length(y) should equal
     nrow(x)}
-  \item{newx}{An {\it optional} argument, consisting of a matrix with
+  \item{newx}{An *optional* argument, consisting of a matrix with
     ncol(x) columns, at which one wishes to make predictions for each
     (lam1,lam2) pair.}
   \item{p1}{The $L_p$ penalty for the covariance regularization. Must be
@@ -47,9 +47,9 @@ and so those values will be automatically increased to 1e-4. }
     matrix. Can be NULL if p2=NULL. (If p2=NULL, then non-zero lam2s
     have no effect). A value of 0 will result in no
     regularization. }
-  \item{rescale}{Should coefficients $\beta$ obtained by
+  \item{rescale}{Should coefficients beta obtained by
     covariance-regularized regression be re-scaled by a constant, given
-    by regressing $y$ onto $x \beta$? This is done in Witten and
+    by regressing $y$ onto $x beta$? This is done in Witten and
     Tibshirani (2008) and is important for good performance. Default is
     TRUE.}
   \item{trace}{Print out progress? Prints out each time a lambda1 is
@@ -71,8 +71,8 @@ and so those values will be automatically increased to 1e-4. }
   \item{lam2s}{lam2s used}
 }
 \references{Witten, DM and Tibshirani, R (2008) Covariance-regularized
-  regression and classification for high-dimensional problems. {\it Journal
-  of the Royal Statistical Society, Series B}. To appear. <http://www-stat.stanford.edu/~dwitten>}
+  regression and classification for high-dimensional problems. Journal
+  of the Royal Statistical Society, Series B 71(3): 615-636. <http://www-stat.stanford.edu/~dwitten>}
 \author{Daniela M. Witten and Robert Tibshirani}
 \note{
   When p1=1 and ncol(x)>500 or so, then Scout can be very slow!!

@@ -5,8 +5,8 @@
 \title{
 Implements covariance-regularized regression, aka the Scout Method.
 }
-\description{
-
+\description{ Functions for implementing covariance-regularize
+  regression.
 }
 \details{
 \tabular{ll}{
@@ -31,8 +31,8 @@ Maintainer: Daniela Witten <dwitten@stanford.edu>
 }
 \references{
 Witten and Tibshirani (2008) Covariance-regularized regression and
-classification for high-dimensional problems. {\it Journal of the Royal
-  Statistical Society, Series B}. To appear.
+classification for high-dimensional problems. Journal of the Royal
+  Statistical Society, Series B 71(3): 615-636.
 }
 
 \keyword{ package }
