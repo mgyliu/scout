@@ -61,8 +61,6 @@ nrow(x)}
   regression and classification for high-dimensional problems. Journal
   of the Royal Statistical Society, Series B 71(3): 615-636. <http://www-stat.stanford.edu/~dwitten>}
 \author{Daniela M. Witten and Robert Tibshirani}
-\note{ 
-}
 \seealso{\link{scout}, \link{predict.scoutobject} }
 \examples{ 
 data(diabetes)
@@ -76,5 +74,3 @@ print(c("Lars minimum CV is ", min(cv.la$cv)))
 print(c("Scout(2,1) minimum CV is ", min(cv.sc$cv)))
 detach(diabetes)
 }
-\keyword{ }
-\keyword{ }

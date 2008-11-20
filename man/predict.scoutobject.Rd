@@ -10,8 +10,6 @@ the "scout" function.
 predict.scoutobject(object, newx, ...)
 }
 %- maybe also 'usage' for other objects documented here.
-\details{
-}
 \arguments{
   \item{object}{The results of a call to the "scout" function. The
     coefficients that are part of this object will be used for
@@ -33,8 +31,6 @@ predict.scoutobject(object, newx, ...)
   regression and classification for high-dimensional problems.  Journal
   of the Royal Statistical Society, Series B 71(3): 615-636. <http://www-stat.stanford.edu/~dwitten>}
 \author{Daniela M. Witten and Robert Tibshirani}
-\note{ 
-}
 \seealso{\link{scout}, \link{cv.scout} }
 \examples{
 data(diabetes)
@@ -59,5 +55,3 @@ yhats <- predict(scout.object,xtest)
 print(mean((yhats-ytest)^2))
 detach(diabetes)
 }
-\keyword{ }
-\keyword{ }

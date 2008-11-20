@@ -17,6 +17,10 @@ calling crossProdLasso(Sigma, X'y,rho).
 
 If you run crossProdLasso(X'X,X'y,rho) then it should give the same
 result as lars(X,y)
+
+Notice that the xtx that you pass into this function must be POSITIVE
+SEMI DEFINITE (or positive definite) or the problem is not convex and
+the algorithm will not converge.
 }
 \usage{
 crossProdLasso(xtx,xty,rho,thr=1e-4,maxit=100,beta.init=NULL)
@@ -34,7 +38,9 @@ function is
 }
 \arguments{
   \item{xtx}{A pxp matrix, which should be an estimate of a covariance
-    matrix.}
+    matrix. This matrix must be POSITIVE
+SEMI DEFINITE (or positive definite) or the problem is not convex and
+the algorithm will not converge.}
   \item{xty}{A px1 vector, which is generally obtained via X'y.}
   \item{rho}{Must be non-negative; the regularization parameter you are
     using. }
@@ -54,8 +60,8 @@ function is
 \note{The FORTRAN code that this function links to was kindly written
   and provided by Jerry Friedman.
 }
-\seealso{ }
 \examples{
+set.seed(1)
 data(diabetes)
 attach(diabetes)
 # First, let's do scout(2,1) the usual way).
@@ -67,13 +73,14 @@ print(scout.out)
 # Now, suppose I want to do develop a covariance-regularized regression
 # method as in Section 3.2 of Witten and Tibshirani (2008). It will work
 # like this:
-# 1. Estimate Sigma by hard-thresholding X'X
+# 1. Develop some positive definite estimate of Sigma
 # 2. Find \beta by minimize \beta^T \Sigma \beta - 2 \beta^T X^T y +
 # \lamda ||\beta||_1
 # 3. Re-scale \beta.
 
 # Step 1:
-regcovx <- cov(x2)*(abs(cov(x2))>.05)
+regcovx <- cov(x2)*(abs(cov(x2))>.005) + diag(ncol(x2))*.01
+
 # Step 2:
 betahat <-  crossProdLasso(regcovx, cov(x2,y), rho=.02)$beta
 # Step 3:
@@ -85,5 +92,3 @@ betahat2 <- crossProdLasso(regcovx,cov(x2,y),rho=.04,beta.init=betahat)$beta
 plot(betahat,betahat2, xlab="rho=.02",ylab="rho=.04")
 detach(diabetes)
 }
-\keyword{ }
-\keyword{ }

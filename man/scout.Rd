@@ -16,8 +16,6 @@ values, rather than an entire grid) can be specified.
 scout(x,y,newx,p1=2,p2=1,lam1s=seq(.001,.2,len=10),lam2s=seq(.001,.2,len=10),rescale=TRUE, trace=TRUE,standardize=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
-\details{
-}
 \arguments{
   \item{x}{A matrix of predictors, where the rows are the samples and
     the columns are the predictors}
@@ -86,5 +84,3 @@ scout.out <- scout(x2,y,p1=2,p2=1)
 print(scout.out)
 detach(diabetes)
 }
-\keyword{ }
-\keyword{ }
