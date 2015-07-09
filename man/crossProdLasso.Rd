@@ -62,8 +62,10 @@ the algorithm will not converge.}
 }
 \examples{
 set.seed(1)
-data(diabetes)
-attach(diabetes)
+#data(diabetes)
+#attach(diabetes)
+x2 <- matrix(rnorm(10*20),ncol=20)
+y <- rnorm(10)
 # First, let's do scout(2,1) the usual way).
 scout.out <- scout(x2,y,p1=2,p2=1)
 print(scout.out)
@@ -90,5 +92,5 @@ print(betahat.sc)
 # Try a different value of rho:
 betahat2 <- crossProdLasso(regcovx,cov(x2,y),rho=.04,beta.init=betahat)$beta
 plot(betahat,betahat2, xlab="rho=.02",ylab="rho=.04")
-detach(diabetes)
+#detach(diabetes)
 }

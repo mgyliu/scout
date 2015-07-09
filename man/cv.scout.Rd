@@ -7,7 +7,9 @@
   plot=TRUE.
 }
 \usage{
-cv.scout(x, y, K= 10, lam1s=seq(0.001,.2,len=10),lam2s=seq(0.001,.2,len=10),p1=2,p2=1,trace = TRUE, plot=TRUE,plotSE=FALSE,rescale=TRUE,...)
+cv.scout(x, y, K= 10,
+  lam1s=seq(0.001,.2,len=10),lam2s=seq(0.001,.2,len=10),p1=2,p2=1,
+  trace = TRUE, plot=TRUE,plotSE=FALSE,rescale=TRUE,...)
 }
 %- maybe also 'usage' for other objects documented here.
 \details{Pass in a data matrix x and a vector of outcomes y; it will perform
@@ -62,15 +64,16 @@ nrow(x)}
   of the Royal Statistical Society, Series B 71(3): 615-636. <http://www-stat.stanford.edu/~dwitten>}
 \author{Daniela M. Witten and Robert Tibshirani}
 \seealso{\link{scout}, \link{predict.scoutobject} }
-\examples{ 
+\examples{
+library(lars)
 data(diabetes)
 attach(diabetes)
 par(mfrow=c(2,1))
 par(mar=c(2,2,2,2))
-cv.sc <- cv.scout(x2,y,p1=2,p2=1)
-print(cv.sc)
-cv.la <- cv.lars(x2,y)
-print(c("Lars minimum CV is ", min(cv.la$cv)))
-print(c("Scout(2,1) minimum CV is ", min(cv.sc$cv)))
+\dontrun{cv.sc <- cv.scout(x2,y,p1=2,p2=1)}
+\dontrun{print(cv.sc)}
+\dontrun{cv.la <- cv.lars(x2,y)}
+\dontrun{print(c("Lars minimum CV is ", min(cv.la$cv)))}
+\dontrun{print(c("Scout(2,1) minimum CV is ", min(cv.sc$cv)))}
 detach(diabetes)
 }

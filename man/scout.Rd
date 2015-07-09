@@ -13,7 +13,8 @@ and lambda2 values, but a different grid of values (or individual
 values, rather than an entire grid) can be specified.
 }
 \usage{
-scout(x,y,newx,p1=2,p2=1,lam1s=seq(.001,.2,len=10),lam2s=seq(.001,.2,len=10),rescale=TRUE, trace=TRUE,standardize=TRUE)
+scout(x,y,newx,p1=2,p2=1,lam1s=seq(.001,.2,len=10),lam2s=seq(.001,.2,len=10),
+   rescale=TRUE, trace=TRUE,standardize=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -78,6 +79,7 @@ and so those values will be automatically increased to 1e-4. }
 }
 \seealso{\link{predict.scoutobject}, \link{cv.scout}}
 \examples{
+library(lars)
 data(diabetes)
 attach(diabetes)
 scout.out <- scout(x2,y,p1=2,p2=1)

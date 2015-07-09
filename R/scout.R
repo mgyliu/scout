@@ -33,10 +33,10 @@ scout1something <- function(x, y, p2, lam1s, lam2s, rescale,trace){
     if(trace) cat(i,fill=F)
     g.out <- NULL
     if(i==1 || is.null(g.out$w) || is.null(g.out$wi)){
-      if(lam1s[i]!=0) g.out <- glasso(cov(x), rho=lam1s[i])
+      if(lam1s[i]!=0) g.out <- glasso::glasso(cov(x), rho=lam1s[i])
       if(lam1s[i]==0) g.out <- list(w=cov(x),wi=NULL)
     } else if(i!=1 && !is.null(g.out$w) && !is.null(g.out$wi)){
-      g.out <- glasso(cov(x), rho=lam1s[i], start="warm", w.init=g.out$w, wi.init=g.out$wi)
+      g.out <- glasso::glasso(cov(x), rho=lam1s[i], start="warm", w.init=g.out$w, wi.init=g.out$wi)
     } 
     for(j in 1:length(lam2s)){
       if (p2==0 || lam2s[j]==0){

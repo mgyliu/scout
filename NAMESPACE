@@ -1,3 +1,8 @@
-export(scout,cv.scout,predict.scoutobject,print.scoutobject,print.cvobject,crossProdLasso)
+export(scout,cv.scout,crossProdLasso)
 useDynLib(scout)
-
+S3method(print,scoutobject)
+S3method(print,cvobject)
+S3method(predict,scoutobject)
+import(stats)
+import(grDevices)
+import(graphics)

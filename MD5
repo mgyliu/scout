@@ -1,0 +1,13 @@
+58e543bd53056d406055bc652ee9d9ac *DESCRIPTION
+073a16308c11076620ace0862f47f0e3 *NAMESPACE
+96b684d81fa868554cc0e2687447ac6c *R/lasso_one.R
+269ba3bb7101f8f6c3f85071fc8b2a3e *R/scout.R
+0e7269d474d0d92c8ea6c0b4d22f00aa *R/zzz.R
+e56df738336fdfa6bc530cad2cec9097 *man/crossProdLasso.Rd
+96d181c471b98ce811992086c6c400e1 *man/cv.scout.Rd
+e9f61affc99bef44e4d11b1fbb0d6316 *man/predict.scoutobject.Rd
+b3951eecd4e765197f5701d81bd5c50d *man/print.cvobject.Rd
+b88a3bb3f35f377c0a56219fe8fdf821 *man/print.scoutobject.Rd
+62c14f186d94df03f5e30215055a376b *man/scout-package.Rd
+4c2149f2513c181bc87cc41121948ac4 *man/scout.Rd
+81704c759daf6f585a24b33c68e6e8ee *src/lasinv.f90

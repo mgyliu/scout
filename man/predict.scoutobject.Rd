@@ -7,7 +7,7 @@ A function to perform prediction, using an x matrix and the output of
 the "scout" function.
 }
 \usage{
-predict.scoutobject(object, newx, ...)
+\method{predict}{scoutobject}(object, newx, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -33,6 +33,7 @@ predict.scoutobject(object, newx, ...)
 \author{Daniela M. Witten and Robert Tibshirani}
 \seealso{\link{scout}, \link{cv.scout} }
 \examples{
+library(lars)
 data(diabetes)
 attach(diabetes)
 # Split data into training and test set
@@ -43,15 +44,15 @@ xtest <- x2[-training,]
 ytest <- y[-training]
 # Done splitting data into training and test set
 # Do cross-validation to determine best tuning parameter values for Scout(1,1)
-cv.out <- cv.scout(xtrain,ytrain,p1=1,p2=1, lam1s=seq(0.001,.15,len=10))
-print(cv.out)
+\dontrun{cv.out <- cv.scout(xtrain,ytrain,p1=1,p2=1, lam1s=seq(0.001,.15,len=5),K=4)}
+\dontrun{print(cv.out)}
 # Done cross-validation
-# Fit Model
-scout.object <- scout(xtrain,ytrain,p1=1,p2=1,lam1s=cv.out$bestlam1,lam2s=cv.out$bestlam2)
-print(scout.object)
-# Done Fitting Model
-# Predict on test data, and report MSE
-yhats <- predict(scout.object,xtest)
-print(mean((yhats-ytest)^2))
+## Fit Model
+#scout.object <- scout(xtrain,ytrain,p1=1,p2=1,lam1s=cv.out$bestlam1,lam2s=cv.out$bestlam2)
+#print(scout.object)
+## Done Fitting Model
+## Predict on test data, and report MSE
+#yhats <- predict(scout.object,xtest)
+#print(mean((yhats-ytest)^2))
 detach(diabetes)
 }

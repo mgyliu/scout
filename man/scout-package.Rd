@@ -40,11 +40,12 @@ classification for high-dimensional problems. Journal of the Royal
 <http://www-stat.stanford.edu/~dwitten>
 }
 \examples{
+library(lars)
 data(diabetes)
 attach(diabetes)
-cv.out <- cv.scout(x2,y,p1=1,p2=1)
-print(cv.out)
-out <- scout(x2,y,p1=1,p2=1,lam1=cv.out$bestlam1,lam2=cv.out$bestlam2)
-coef <- out$coef[1,1,]
+\dontrun{cv.out <- cv.scout(x2,y,p1=1,p2=1,K=3)}
+\dontrun{print(cv.out)}
+\dontrun{out <- scout(x2,y,p1=1,p2=1,lam1=cv.out$bestlam1,lam2=cv.out$bestlam2)}
+\dontrun{coef <- out$coef[1,1,]}
 detach(diabetes)
 }
