@@ -1,3 +1,45 @@
+mycov <- function(x, y = NULL, alternateCov = NULL) {
+  n = NROW(x)
+  options = c("mcd", "cellwise", "mve")
+
+  stopifnot(alternateCov %in% options)
+
+  if (sum(alternateCov == "cellwise") > 0) {
+    locScale.x <- cellWise::estLocScale(x)
+    # the wrapped data is stored in $Xw. covariances get computed on this.
+    Xw.x <- cellWise::wrap(x, locScale.x$loc, locScale.x$scale)$Xw    
+    if (is.null(y)) {
+      Xw.x.cov <- cov(Xw.x)
+      return(ifelse(bias, Xw.x.cov, (n-1)/n * Xw.x.cov))
+    } else {
+      locScale.y <- cellWise::estLocScale(y)
+      Xw.y <- cellWise::wrap(y, locScale.y$loc, locScale.y$scale)$Xw
+      Xw.xy.cov <- cov(Xw.x, Xw.y)
+      return(Xw.xy.cov)
+    }
+  }
+
+  if (sum(alternateCov == "mcd") > 0) {    
+    if (is.null(y)) {
+      cov_mcd <- robustbase::covMcd(x)$cov  
+    } else {
+      cov_mcd <- robustbase::covMcd(cbind(x,y))$cov  
+    }
+    return(cov_mcd)
+  }
+
+  if (sum(alternateCov == "mve") > 0) {
+    if (is.null(y)) {
+      cov_mve <- rrcov::CovMve(x)$cov
+    } else {
+      cov_mve <- rrcov::CovMve(cbind(x,y))$cov
+    }
+    return(cov_mve)
+  }
+
+  return(stats::cov(x, y))
+}
+
 gridge <- function(x, rho=0, v=NULL, thetas=NULL, u=NULL){
   x <- x/sqrt(nrow(x)-1)
   p <- 2*rho
@@ -33,19 +75,20 @@ scout1something <- function(x, y, p2, lam1s, lam2s, rescale,trace){
     if(trace) cat(i,fill=F)
     g.out <- NULL
     if(i==1 || is.null(g.out$w) || is.null(g.out$wi)){
-      if(lam1s[i]!=0) g.out <- glasso::glasso(cov(x), rho=lam1s[i])
-      if(lam1s[i]==0) g.out <- list(w=cov(x),wi=NULL)
+      if(lam1s[i]!=0) g.out <- glasso::glasso(mycov(x), rho=lam1s[i])
+      if(lam1s[i]==0) g.out <- list(w=mycov(x),wi=NULL)
     } else if(i!=1 && !is.null(g.out$w) && !is.null(g.out$wi)){
-      g.out <- glasso::glasso(cov(x), rho=lam1s[i], start="warm", w.init=g.out$w, wi.init=g.out$wi)
+      g.out <- glasso::glasso(mycov(x), rho=lam1s[i], start="warm", w.init=g.out$w, wi.init=g.out$wi)
     } 
     for(j in 1:length(lam2s)){
       if (p2==0 || lam2s[j]==0){
-        beta <- g.out$wi %*% cov(x,y)
+        beta <- g.out$wi %*% mycov(x,y)
       } else if(p2==1 && lam2s[j]!=0){
-        if(j==1) beta <- lasso_one(g.out$w, cov(x,y), rho=lam2s[j])$beta
+        browser()
+        if(j==1) beta <- lasso_one(g.out$w, mycov(x,y), rho=lam2s[j])$beta
         if(j!=1){
           if(sum(abs(beta))!=0 || lam2s[j]<lam2s[j-1]){ 
-            beta <- lasso_one(g.out$w, cov(x,y), rho=lam2s[j], beta.init=beta)$beta
+            beta <- lasso_one(g.out$w, mycov(x,y), rho=lam2s[j], beta.init=beta)$beta
             # if got zero for smaller value of lambda 2,
             # then no need to keep computing!!!
           }
@@ -73,12 +116,12 @@ scout2something <- function(x, y, p2, lam1s, lam2s,rescale, trace){
       if(i!=1 && !is.null(g.out)) g.out <- gridge(x, rho=lam1s[i], v=g.out$svdstuff$v, thetas=g.out$svdstuff$thetas, u=g.out$svdstuff$u)
       for(j in 1:length(lam2s)){
         if (p2==0){
-          beta <- diag(rep(g.out$wistuff$firstdiag, ncol(x))) %*% cov(x,y) + g.out$wistuff$v %*% (diag(g.out$wistuff$diagsandwich) %*% ((t(g.out$wistuff$v)) %*% cov(x,y)))
+          beta <- diag(rep(g.out$wistuff$firstdiag, ncol(x))) %*% mycov(x,y) + g.out$wistuff$v %*% (diag(g.out$wistuff$diagsandwich) %*% ((t(g.out$wistuff$v)) %*% mycov(x,y)))
         } else if(p2!=0 && p2==1){
-          if(j==1) beta <- lasso_one(diag(rep(g.out$wstuff$firstdiag, ncol(x))) + g.out$wstuff$v %*% diag(g.out$wstuff$diagsandwich) %*% t(g.out$wstuff$v), cov(x,y), rho=lam2s[j])$beta
+          if(j==1) beta <- lasso_one(diag(rep(g.out$wstuff$firstdiag, ncol(x))) + g.out$wstuff$v %*% diag(g.out$wstuff$diagsandwich) %*% t(g.out$wstuff$v), mycov(x,y), rho=lam2s[j])$beta
           if(j!=1){
             if(sum(abs(beta))!=0 || lam2s[j]<lam2s[j-1]){
-              beta <- lasso_one(diag(rep(g.out$wstuff$firstdiag, ncol(x))) + g.out$wstuff$v %*% diag(g.out$wstuff$diagsandwich) %*% t(g.out$wstuff$v), cov(x,y), rho=lam2s[j], beta.init=beta)$beta
+              beta <- lasso_one(diag(rep(g.out$wstuff$firstdiag, ncol(x))) + g.out$wstuff$v %*% diag(g.out$wstuff$diagsandwich) %*% t(g.out$wstuff$v), mycov(x,y), rho=lam2s[j], beta.init=beta)$beta
               # If you got zero for a smaller value of
               # lambda2, then no need to keep computing!!!!!!!
             }
@@ -92,7 +135,7 @@ scout2something <- function(x, y, p2, lam1s, lam2s,rescale, trace){
       if(p2==1){
         for(j in 1:length(lam2s)){
           if(lam2s[j]==0) beta <- lsfit(x,y,intercept=FALSE)$coef
-          if(lam2s[j]!=0) beta <- lasso_one(cov(x),cov(x,y), rho=lam2s[j])$beta
+          if(lam2s[j]!=0) beta <- lasso_one(mycov(x),mycov(x,y), rho=lam2s[j])$beta
           if(sum(abs(beta))!=0 && rescale){
             betamat[i,j,] <- beta*lsfit(x%*%beta,y,intercept=FALSE)$coef
           } else {
@@ -177,10 +220,10 @@ scout <- function(x, y, newx=NULL, p1=2, p2=1, lam1s=seq(.001,.2,len=10), lam2s=
        beta <- lsfit(x,y,intercept=FALSE)$coef
        betamat[1,j,] <- beta
      } else {
-       if(j==1) beta <- lasso_one(cov(x), cov(x,y), rho=lam2s[j])$beta
+       if(j==1) beta <- lasso_one(mycov(x), mycov(x,y), rho=lam2s[j])$beta
        if(j!=1){
          if(sum(abs(beta))!=0 || lam2s[j]<lam2s[j-1]){ 
-           beta <- lasso_one(cov(x), cov(x,y), rho=lam2s[j], beta.init=beta)$beta
+           beta <- lasso_one(mycov(x), mycov(x,y), rho=lam2s[j], beta.init=beta)$beta
                                         # if got zero for smaller value of lambda 2,
                                         # then no need to keep computing!!!
          }
