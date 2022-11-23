@@ -84,7 +84,6 @@ scout1something <- function(x, y, p2, lam1s, lam2s, rescale,trace){
       if (p2==0 || lam2s[j]==0){
         beta <- g.out$wi %*% mycov(x,y)
       } else if(p2==1 && lam2s[j]!=0){
-        browser()
         if(j==1) beta <- lasso_one(g.out$w, mycov(x,y), rho=lam2s[j])$beta
         if(j!=1){
           if(sum(abs(beta))!=0 || lam2s[j]<lam2s[j-1]){ 
