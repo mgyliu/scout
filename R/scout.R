@@ -1,5 +1,8 @@
 mycov <- function(x, y = NULL, alternateCov = NULL) {
   n = NROW(x)
+  p = NCOL(x)
+  q = NCOL(y)
+
   options = c("mcd", "cellwise", "mve")
 
   stopifnot(alternateCov %in% options)
@@ -9,21 +12,23 @@ mycov <- function(x, y = NULL, alternateCov = NULL) {
     # the wrapped data is stored in $Xw. covariances get computed on this.
     Xw.x <- cellWise::wrap(x, locScale.x$loc, locScale.x$scale)$Xw    
     if (is.null(y)) {
-      Xw.x.cov <- cov(Xw.x)
-      return(ifelse(bias, Xw.x.cov, (n-1)/n * Xw.x.cov))
+      cov_cellwise <- cov(Xw.x)
     } else {
       locScale.y <- cellWise::estLocScale(y)
       Xw.y <- cellWise::wrap(y, locScale.y$loc, locScale.y$scale)$Xw
-      Xw.xy.cov <- cov(Xw.x, Xw.y)
-      return(Xw.xy.cov)
+      cov_cellwise <- cov(Xw.x, Xw.y)
     }
+    return(cov_cellwise)
   }
 
   if (sum(alternateCov == "mcd") > 0) {    
     if (is.null(y)) {
       cov_mcd <- robustbase::covMcd(x)$cov  
     } else {
-      cov_mcd <- robustbase::covMcd(cbind(x,y))$cov  
+      cov_full <- robustbase::covMcd(cbind(x,y))$cov  
+      # cov_full is (p+q) x (p+q)
+      # Cov(X,Y) is the top-right matrix of cov_full here
+      cov_mcd <- as.matrix(cov_full[1:p, (p+1):(p+q)])
     }
     return(cov_mcd)
   }
@@ -32,7 +37,10 @@ mycov <- function(x, y = NULL, alternateCov = NULL) {
     if (is.null(y)) {
       cov_mve <- rrcov::CovMve(x)$cov
     } else {
-      cov_mve <- rrcov::CovMve(cbind(x,y))$cov
+      cov_full <- rrcov::CovMve(cbind(x,y))$cov
+      # cov_full is (p+q) x (p+q)
+      # Cov(X,Y) is the top-right matrix of cov_full here
+      cov_mve <- as.matrix(cov_full[1:p, (p+1):(p+q)])
     }
     return(cov_mve)
   }
