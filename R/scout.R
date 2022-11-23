@@ -60,7 +60,7 @@ gridge <- function(x, rho=0, v=NULL, thetas=NULL, u=NULL){
 }
 
 
-scout1something <- function(x, y, p2, lam1s, lam2s, rescale,trace){
+scout1something <- function(x, y, p2, lam1s, lam2s, rescale,trace, alternateCov = NULL){
   if(ncol(x)>500) print("You are running scout with p1=1 and ncol(x) > 500. This will be slow. You may want to re-start and use p1=2, which is much faster.")
   if(min(lam1s)==0 && min(lam2s)==0 && ncol(x)>=nrow(x)) stop("don't run w/lam1=0 and lam2=0 when p>=n")
   if(sum(order(lam2s)==(1:length(lam2s)))!=length(lam2s)){
@@ -75,19 +75,19 @@ scout1something <- function(x, y, p2, lam1s, lam2s, rescale,trace){
     if(trace) cat(i,fill=F)
     g.out <- NULL
     if(i==1 || is.null(g.out$w) || is.null(g.out$wi)){
-      if(lam1s[i]!=0) g.out <- glasso::glasso(mycov(x), rho=lam1s[i])
-      if(lam1s[i]==0) g.out <- list(w=mycov(x),wi=NULL)
+      if(lam1s[i]!=0) g.out <- glasso::glasso(mycov(x, alternateCov = alternateCov), rho=lam1s[i])
+      if(lam1s[i]==0) g.out <- list(w=mycov(x, alternateCov = alternateCov),wi=NULL)
     } else if(i!=1 && !is.null(g.out$w) && !is.null(g.out$wi)){
-      g.out <- glasso::glasso(mycov(x), rho=lam1s[i], start="warm", w.init=g.out$w, wi.init=g.out$wi)
+      g.out <- glasso::glasso(mycov(x, alternateCov = alternateCov), rho=lam1s[i], start="warm", w.init=g.out$w, wi.init=g.out$wi)
     } 
     for(j in 1:length(lam2s)){
       if (p2==0 || lam2s[j]==0){
-        beta <- g.out$wi %*% mycov(x,y)
+        beta <- g.out$wi %*% mycov(x,y, alternateCov = alternateCov)
       } else if(p2==1 && lam2s[j]!=0){
-        if(j==1) beta <- lasso_one(g.out$w, mycov(x,y), rho=lam2s[j])$beta
+        if(j==1) beta <- lasso_one(g.out$w, mycov(x,y, alternateCov = alternateCov), rho=lam2s[j])$beta
         if(j!=1){
           if(sum(abs(beta))!=0 || lam2s[j]<lam2s[j-1]){ 
-            beta <- lasso_one(g.out$w, mycov(x,y), rho=lam2s[j], beta.init=beta)$beta
+            beta <- lasso_one(g.out$w, mycov(x,y, alternateCov = alternateCov), rho=lam2s[j], beta.init=beta)$beta
             # if got zero for smaller value of lambda 2,
             # then no need to keep computing!!!
           }
@@ -101,7 +101,7 @@ scout1something <- function(x, y, p2, lam1s, lam2s, rescale,trace){
 }
 
 
-scout2something <- function(x, y, p2, lam1s, lam2s,rescale, trace){
+scout2something <- function(x, y, p2, lam1s, lam2s,rescale, trace, alternateCov = NULL){
   if(sum(order(lam2s)==(1:length(lam2s)))!=length(lam2s)){
     stop("Error!!!! lam2s must be ordered!!!")
   }
@@ -115,12 +115,12 @@ scout2something <- function(x, y, p2, lam1s, lam2s,rescale, trace){
       if(i!=1 && !is.null(g.out)) g.out <- gridge(x, rho=lam1s[i], v=g.out$svdstuff$v, thetas=g.out$svdstuff$thetas, u=g.out$svdstuff$u)
       for(j in 1:length(lam2s)){
         if (p2==0){
-          beta <- diag(rep(g.out$wistuff$firstdiag, ncol(x))) %*% mycov(x,y) + g.out$wistuff$v %*% (diag(g.out$wistuff$diagsandwich) %*% ((t(g.out$wistuff$v)) %*% mycov(x,y)))
+          beta <- diag(rep(g.out$wistuff$firstdiag, ncol(x))) %*% mycov(x,y, alternateCov = alternateCov) + g.out$wistuff$v %*% (diag(g.out$wistuff$diagsandwich) %*% ((t(g.out$wistuff$v)) %*% mycov(x,y, alternateCov = alternateCov)))
         } else if(p2!=0 && p2==1){
-          if(j==1) beta <- lasso_one(diag(rep(g.out$wstuff$firstdiag, ncol(x))) + g.out$wstuff$v %*% diag(g.out$wstuff$diagsandwich) %*% t(g.out$wstuff$v), mycov(x,y), rho=lam2s[j])$beta
+          if(j==1) beta <- lasso_one(diag(rep(g.out$wstuff$firstdiag, ncol(x))) + g.out$wstuff$v %*% diag(g.out$wstuff$diagsandwich) %*% t(g.out$wstuff$v), mycov(x,y, alternateCov = alternateCov), rho=lam2s[j])$beta
           if(j!=1){
             if(sum(abs(beta))!=0 || lam2s[j]<lam2s[j-1]){
-              beta <- lasso_one(diag(rep(g.out$wstuff$firstdiag, ncol(x))) + g.out$wstuff$v %*% diag(g.out$wstuff$diagsandwich) %*% t(g.out$wstuff$v), mycov(x,y), rho=lam2s[j], beta.init=beta)$beta
+              beta <- lasso_one(diag(rep(g.out$wstuff$firstdiag, ncol(x))) + g.out$wstuff$v %*% diag(g.out$wstuff$diagsandwich) %*% t(g.out$wstuff$v), mycov(x,y, alternateCov = alternateCov), rho=lam2s[j], beta.init=beta)$beta
               # If you got zero for a smaller value of
               # lambda2, then no need to keep computing!!!!!!!
             }
@@ -134,7 +134,7 @@ scout2something <- function(x, y, p2, lam1s, lam2s,rescale, trace){
       if(p2==1){
         for(j in 1:length(lam2s)){
           if(lam2s[j]==0) beta <- lsfit(x,y,intercept=FALSE)$coef
-          if(lam2s[j]!=0) beta <- lasso_one(mycov(x),mycov(x,y), rho=lam2s[j])$beta
+          if(lam2s[j]!=0) beta <- lasso_one(mycov(x, alternateCov = alternateCov),mycov(x,y, alternateCov = alternateCov), rho=lam2s[j])$beta
           if(sum(abs(beta))!=0 && rescale){
             betamat[i,j,] <- beta*lsfit(x%*%beta,y,intercept=FALSE)$coef
           } else {
@@ -167,91 +167,103 @@ predict.scoutobject <- function(object, newx, ...){
    return(yhat)
 }
 
-scout <- function(x, y, newx=NULL, p1=2, p2=1, lam1s=seq(.001,.2,len=10), lam2s=seq(.001,.2,len=10), rescale=TRUE, trace=TRUE, standardize=TRUE){
+scout <- function(
+  x, y, newx = NULL, p1 = 2, p2 = 1, 
+  lam1s = seq(.001, .2, len=10), lam2s = seq(.001, .2, len=10), 
+  rescale = TRUE, trace = TRUE, standardize = TRUE, alternateCov = NULL) {
   call <- match.call()
   if(!is.null(p1) && p1!=1 && p1!=2) stop("p1 must be 1, 2, or NULL.")
   if(!is.null(p2) && p2!=1) stop("p1 must be 1 or NULL.")
- if((sum(is.na(x)) + sum(is.na(y)))>0) stop("Please fix the NAs in your data set first. Missing values can be imputed using library 'impute'.")
- x <- as.matrix(x)
- if(min(apply(x,2,sd))==0) stop("Please do not enter an x matrix with variables that are constant.")
- # Need to center and scale x,y
- meany <- mean(y)
- meanx <- apply(x,2,mean)
- if(standardize){
-   sdy <- sd(y)
-   sdx <- apply(x,2,sd)
-   x <- scale(x,T,T)
- } else {
-   x <- scale(x,T,F)
-   sdx <- rep(1,ncol(x))
-   sdy <- 1
- }
- y <- (y-meany)/sdy
- # Want to re-order lam2s in increasing order
- if(length(lam2s)>0){
-   lam2s.orig <- lam2s
-   s2.out <- sort(lam2s.orig,index.return=TRUE)
-   lam2s <- lam2s.orig[s2.out$ix]
- }
- # Done re-ordering lam2s
- # Want to re-order lam1s in increasing order
- if(length(lam1s)>0){
-   lam1s.orig <- lam1s
-   s1.out <- sort(lam1s.orig,index.return=TRUE)
-   lam1s <- lam1s.orig[s1.out$ix]
- }
- # Done re-ordering lam1s
- if(is.null(lam1s) || is.null(p1) || sum(lam1s)==0){ p1 <- 0; lam1s=c(0); lam1s.orig=c(0) }
- if(is.null(lam2s) || is.null(p2) || sum(lam2s)==0){ p2 <- 0; lam2s=c(0); lam2s.orig=c(0) }
- if(p1!=0 && p1!=1 && p1!=2) stop("p1 must be 1, 2, or 0")
- if(p2!=0 && p2!=1) stop("p2 must be 1 or 0")
- if(!is.null(lam1s) && min(lam1s)<0) stop("lam1s cannot be negative")
- if(!is.null(lam2s) && min(lam2s)<0) stop("lam2s cannot be negative")
- if(ncol(x) >= nrow(x) && p1==0 && p2==0){
-     stop("p1 and p2 cannot both be zero when p>n.")
- }
- if(p1==0){
-   betamat <- array(NA,dim=c(1,length(lam2s),ncol(x)))
-   for(j in 1:length(lam2s)){
-     if(trace) cat(j,fill=F)
-     if(lam2s[j]==0){
-       if(ncol(x)>=nrow(x)) stop("Cannot do Least Squares when ncol(x)>=nrow(x)")
-       beta <- lsfit(x,y,intercept=FALSE)$coef
-       betamat[1,j,] <- beta
-     } else {
-       if(j==1) beta <- lasso_one(mycov(x), mycov(x,y), rho=lam2s[j])$beta
-       if(j!=1){
-         if(sum(abs(beta))!=0 || lam2s[j]<lam2s[j-1]){ 
-           beta <- lasso_one(mycov(x), mycov(x,y), rho=lam2s[j], beta.init=beta)$beta
-                                        # if got zero for smaller value of lambda 2,
-                                        # then no need to keep computing!!!
-         }
-       }
-       if(rescale && sum(abs(beta))!=0) beta <- beta*lsfit(x%*%beta,y,intercept=FALSE)$coef
-       betamat[1,j,] <- beta
-     }
-   }  
- } else if(p1==1){
-   betamat <- scout1something(x, y, p2, lam1s, lam2s, rescale, trace)
- } else if (p1==2){
-   betamat <- scout2something(x, y, p2, lam1s, lam2s, rescale, trace)
- } 
- interceptmat <- matrix(meany,nrow=length(lam1s),ncol=length(lam2s))
- for(i in 1:length(lam1s)){
-   for(j in 1:length(lam2s)){
-    interceptmat[i,j] <- interceptmat[i,j] -  sum((sdy*meanx/sdx)*betamat[i,j,])
-   }
- }
- betamat <- sweep(betamat,3,sdy/sdx,"*")
- betamat <- array(betamat[rank(lam1s.orig),rank(lam2s.orig),],dim=c(length(lam1s.orig),length(lam2s.orig),ncol(x)))
- interceptmat <- matrix(interceptmat[rank(lam1s.orig),rank(lam2s.orig)],nrow=length(lam1s.orig),ncol=length(lam2s.orig))
- scout.obj <- (list(intercepts=interceptmat,coefficients=betamat,p1=p1,p2=p2,lam1s=lam1s.orig,lam2s=lam2s.orig, yhat=NULL,call=call))
- class(scout.obj) <- "scoutobject"
- if(!is.null(newx)){
-   yhat <- predict.scoutobject(scout.obj,newx)
-   scout.obj$yhat <- yhat
- }
- return(scout.obj)
+  if((sum(is.na(x)) + sum(is.na(y)))>0) stop("Please fix the NAs in your data set first. Missing values can be imputed using library 'impute'.")
+  x <- as.matrix(x)
+  if(min(apply(x,2,sd))==0) stop("Please do not enter an x matrix with variables that are constant.")
+  # Need to center and scale x,y
+  meany <- mean(y)
+  meanx <- apply(x,2,mean)
+  if(standardize){
+    sdy <- sd(y)
+    sdx <- apply(x,2,sd)
+    x <- scale(x,T,T)
+  } else {
+    x <- scale(x,T,F)
+    sdx <- rep(1,ncol(x))
+    sdy <- 1
+  }
+  y <- (y-meany)/sdy
+  # Want to re-order lam2s in increasing order
+  if(length(lam2s)>0){
+    lam2s.orig <- lam2s
+    s2.out <- sort(lam2s.orig,index.return=TRUE)
+    lam2s <- lam2s.orig[s2.out$ix]
+  }
+  # Done re-ordering lam2s
+  # Want to re-order lam1s in increasing order
+  if(length(lam1s)>0){
+    lam1s.orig <- lam1s
+    s1.out <- sort(lam1s.orig,index.return=TRUE)
+    lam1s <- lam1s.orig[s1.out$ix]
+  }
+  # Done re-ordering lam1s
+  if(is.null(lam1s) || is.null(p1) || sum(lam1s)==0){ p1 <- 0; lam1s=c(0); lam1s.orig=c(0) }
+  if(is.null(lam2s) || is.null(p2) || sum(lam2s)==0){ p2 <- 0; lam2s=c(0); lam2s.orig=c(0) }
+  if(p1!=0 && p1!=1 && p1!=2) stop("p1 must be 1, 2, or 0")
+  if(p2!=0 && p2!=1) stop("p2 must be 1 or 0")
+  if(!is.null(lam1s) && min(lam1s)<0) stop("lam1s cannot be negative")
+  if(!is.null(lam2s) && min(lam2s)<0) stop("lam2s cannot be negative")
+  if(ncol(x) >= nrow(x) && p1==0 && p2==0){
+      stop("p1 and p2 cannot both be zero when p>n.")
+  }
+
+  # Conditions on p1 start here
+  if(p1==0){
+    betamat <- array(NA,dim=c(1,length(lam2s),ncol(x)))
+    for(j in 1:length(lam2s)){
+      if(trace) cat(j,fill=F)
+      if(lam2s[j]==0){
+        if(ncol(x)>=nrow(x)) stop("Cannot do Least Squares when ncol(x)>=nrow(x)")
+        beta <- lsfit(x,y,intercept=FALSE)$coef
+        betamat[1,j,] <- beta
+      } else {
+        if(j==1) {
+          beta <- lasso_one(mycov(x, alternateCov = alternateCov), mycov(x,y, alternateCov = alternateCov), rho=lam2s[j])$beta
+        }
+        if(j!=1) {
+          if(sum(abs(beta))!=0 || lam2s[j]<lam2s[j-1]){ 
+            beta <- lasso_one(mycov(x, alternateCov = alternateCov), mycov(x,y, alternateCov = alternateCov), rho=lam2s[j], beta.init=beta)$beta
+                                         # if got zero for smaller value of lambda 2,
+                                         # then no need to keep computing!!!
+          }
+        }
+        if(rescale && sum(abs(beta))!=0) {
+          beta <- beta*lsfit(x%*%beta,y,intercept=FALSE)$coef
+        }
+        betamat[1,j,] <- beta
+      }
+    }  
+  } else if(p1==1){
+    betamat <- scout1something(x, y, p2, lam1s, lam2s, rescale, trace, alternateCov = alternateCov)
+  } else if (p1==2){
+    betamat <- scout2something(x, y, p2, lam1s, lam2s, rescale, trace, alternateCov = alternateCov)
+  } 
+  interceptmat <- matrix(meany,nrow=length(lam1s),ncol=length(lam2s))
+  for(i in 1:length(lam1s)){
+    for(j in 1:length(lam2s)){
+     interceptmat[i,j] <- interceptmat[i,j] -  sum((sdy*meanx/sdx)*betamat[i,j,])
+    }
+  }
+  betamat <- sweep(betamat, 3, sdy/sdx, "*")
+  betamat <- array(
+   betamat[rank(lam1s.orig),rank(lam2s.orig),],
+   dim = c(length(lam1s.orig), length(lam2s.orig), ncol(x))
+  )
+  interceptmat <- matrix(interceptmat[rank(lam1s.orig),rank(lam2s.orig)],nrow=length(lam1s.orig),ncol=length(lam2s.orig))
+  scout.obj <- (list(intercepts=interceptmat,coefficients=betamat,p1=p1,p2=p2,lam1s=lam1s.orig,lam2s=lam2s.orig, yhat=NULL,call=call))
+  class(scout.obj) <- "scoutobject"
+  if(!is.null(newx)){
+    yhat <- predict.scoutobject(scout.obj,newx)
+    scout.obj$yhat <- yhat
+  }
+  return(scout.obj)
 }
 
 print.scoutobject <- function(x,...){
