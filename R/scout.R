@@ -319,7 +319,7 @@ cv.scout <- function(x, y, K = 10, lam1s=seq(0.001,.2,len=10),lam2s=seq(0.001,.2
     for(i in seq(K)){
       if(trace) cat("\n CV Fold", i, "\t")
       omit <- all.folds[[i]]
-      fit <-  scout(x[ - omit,  ], y[ - omit], newx=x[omit,], p1=p1,p2=p2,lam1s=lam1,lam2s=lam2s)
+      fit <-  scout(x[ - omit,  ], y[ - omit], newx=x[omit,], p1=p1,p2=p2,lam1s=lam1,lam2s=lam2s, trace = trace) # TODO: should there be rescale = rescale here??
       residmat[,i] <- apply(sweep(fit$yhat[1,,],2,y[omit],"-")^2,1,mean)
     }
     cv <- apply(residmat, 1, mean)
@@ -342,7 +342,8 @@ cv.scout <- function(x, y, K = 10, lam1s=seq(0.001,.2,len=10),lam2s=seq(0.001,.2
     for(i in seq(K)){
       if(trace) cat("\n CV Fold", i, "\t")
       omit <- all.folds[[i]]
-      fit <-  scout(x[ - omit,  ], y[ - omit], newx=x[omit,], p1=p1,p2=p2,lam1s=lam1s,lam2s=lam2 )
+      browser()
+      fit <-  scout(x[ - omit,  ], y[ - omit], newx=x[omit,], p1=p1,p2=p2,lam1s=lam1s,lam2s=lam2, trace = trace) # TODO: should there be rescale = rescale here??
       residmat[,i] <- apply(sweep(fit$yhat[,1,],2,y[omit],"-")^2,1,mean)
     }
     cv <- apply(residmat, 1, mean)
