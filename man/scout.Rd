@@ -14,7 +14,7 @@ values, rather than an entire grid) can be specified.
 }
 \usage{
 scout(x,y,newx,p1=2,p2=1,lam1s=seq(.001,.2,len=10),lam2s=seq(.001,.2,len=10),
-   rescale=TRUE, trace=TRUE,standardize=TRUE)
+   rescale=TRUE, trace=TRUE,standardize=TRUE, alternateCov=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -59,6 +59,9 @@ and so those values will be automatically increased to 1e-4. }
     covariance-regularized regression is performed? This affects the
     meaning of the penalties that are applied. In general,
     standardization should be performed. Default is TRUE.}
+  \item{alternateCov}{Choose an alternate covariance estimator to use. Defaults
+    to NULL, in which case `stats::cov` is used. Choose from "mcd", "mve",
+    "cellwise".}
 }
 \value{
   \item{intercepts}{Returns a matrix of intercepts, of dimension length(lam1s)xlength(lam2s)}
