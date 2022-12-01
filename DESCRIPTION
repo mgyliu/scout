@@ -1,4 +1,4 @@
-Package: mgyliuscout
+Package: scout
 Type: Package
 Title: Implements the Scout Method for Covariance-Regularized
         Regression
