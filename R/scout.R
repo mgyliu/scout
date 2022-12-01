@@ -23,9 +23,9 @@ mycov <- function(x, y = NULL, alternateCov = NULL) {
 
   if (sum(alternateCov == "mcd") > 0) {    
     if (is.null(y)) {
-      cov_mcd <- robustbase::covMcd(x)$cov  
+      cov_mcd <- robustbase::covMcd(x)$cov  # Cov(X,X)
     } else {
-      cov_full <- robustbase::covMcd(cbind(x,y))$cov  
+      cov_full <- robustbase::covMcd(cbind(x,y))$cov 
       # cov_full is (p+q) x (p+q)
       # Cov(X,Y) is the top-right matrix of cov_full here
       cov_mcd <- as.matrix(cov_full[1:p, (p+1):(p+q)])
@@ -48,59 +48,114 @@ mycov <- function(x, y = NULL, alternateCov = NULL) {
   return(stats::cov(x, y))
 }
 
+# TODO: trying to figure out what this is doing...
+# x: data
+# rho: lambda_1
+# v: svdstuff$v 
+# thetas: svdstuff$thetas [eigenvalues]
+# u: svdstuff$u [eigenvectors]
 gridge <- function(x, rho=0, v=NULL, thetas=NULL, u=NULL){
-  x <- x/sqrt(nrow(x)-1)
-  p <- 2*rho
+  x <- x/sqrt(nrow(x)-1) # stdize x
+  p <- 2*rho # 2*lambda_1
   if(is.null(v)||is.null(thetas)||is.null(u)){
-    covarswap <- x%*%t(x)
+    covarswap <- x%*%t(x) # sample cov <- TODO replace here
     eigenswap <- eigen(covarswap)
     keep <- ((eigenswap$values) > 1e-11)
-    v <- t(diag(1/sqrt(eigenswap$values[keep]))%*%t(eigenswap$vectors[,keep])%*%x)
+    v <- t(
+      diag(1/sqrt(eigenswap$values[keep])) %*% 
+      t(eigenswap$vectors[,keep]) %*% 
+      x) # TODO: what is this
     thetas <- eigenswap$values[keep]
     u <- eigenswap$vectors[,keep]
   }
   lambda <- sqrt(4*p)/2
   diagmat <- (-lambda+ (-thetas + sqrt(thetas^2 + 4*p))/2)
   dbar <- .5*(thetas+sqrt(thetas^2+4*p))-sqrt(p)
-  return(list(svdstuff=list(u=u, v=v, thetas=thetas), wistuff=list(v=v, firstdiag=(1/sqrt(p)),
-     diagsandwich=(-((1/p)*(1/(1/sqrt(p) + 1/dbar))))), wstuff=list(v=v, firstdiag=lambda,
-     diagsandwich=(thetas+diagmat))))
+  
+  # diag prob getting penalized version of var-covar matrix
+
+  return(list(
+    svdstuff = list(u=u, v=v, thetas=thetas), 
+    wistuff = list( # precision matrix
+      v=v, 
+      firstdiag=(1/sqrt(p)), 
+      diagsandwich = (-((1/p)*(1/(1/sqrt(p) + 1/dbar))))
+    ), 
+    wstuff = list( # covariance matrix
+      v=v, 
+      firstdiag=lambda,
+      diagsandwich=(thetas+diagmat))
+    )
+  )
 }
 
 
 scout1something <- function(x, y, p2, lam1s, lam2s, rescale,trace, alternateCov = NULL){
-  if(ncol(x)>500) print("You are running scout with p1=1 and ncol(x) > 500. This will be slow. You may want to re-start and use p1=2, which is much faster.")
-  if(min(lam1s)==0 && min(lam2s)==0 && ncol(x)>=nrow(x)) stop("don't run w/lam1=0 and lam2=0 when p>=n")
-  if(sum(order(lam2s)==(1:length(lam2s)))!=length(lam2s)){
+  if (ncol(x)>500) {
+    print("You are running scout with p1=1 and ncol(x) > 500. This will be slow. You may want to re-start and use p1=2, which is much faster.")
+  }
+
+  if (min(lam1s)==0 && min(lam2s)==0 && ncol(x)>=nrow(x)) {
+    stop("don't run w/lam1=0 and lam2=0 when p>=n")
+  }
+
+  if (sum(order(lam2s)==(1:length(lam2s)))!=length(lam2s)) {
     stop("Error!!!! lam2s must be ordered!!!")
   }
+
+  # Init a 3D matrix of NAs
   betamat <- array(NA, dim=c(length(lam1s), length(lam2s), ncol(x)))
-  if(sum(lam1s>0 & lam1s<1e-4)>0 && ncol(x)>=nrow(x)){
+
+  if (sum(lam1s>0 & lam1s<1e-4)>0 && ncol(x)>=nrow(x)){
     warning("Non-zero lam1s that were smaller than 1e-4 were increased to 1e-4 to avoid problems with graphical lasso that can occur when p>n.")
     lam1s[lam1s < 1e-4 & lam1s!=0] <- 1e-4
   }
-  for(i in 1:length(lam1s)){
+  
+  # Iterate through lambda 1's
+  for (i in 1:length(lam1s)) {
     if(trace) cat(i,fill=F)
     g.out <- NULL
-    if(i==1 || is.null(g.out$w) || is.null(g.out$wi)){
-      if(lam1s[i]!=0) g.out <- glasso::glasso(mycov(x, alternateCov = alternateCov), rho=lam1s[i])
-      if(lam1s[i]==0) g.out <- list(w=mycov(x, alternateCov = alternateCov),wi=NULL)
-    } else if(i!=1 && !is.null(g.out$w) && !is.null(g.out$wi)){
+
+    # On first lambda_1
+    if (i==1 || is.null(g.out$w) || is.null(g.out$wi)) {
+      if (lam1s[i]!=0) {
+        # Estimates a sparse inverse covariance matrix using a lasso (L1) penalty
+        g.out <- glasso::glasso(mycov(x, alternateCov = alternateCov), rho=lam1s[i])
+      }
+      if (lam1s[i]==0) {
+        g.out <- list(w = mycov(x, alternateCov = alternateCov), wi = NULL)
+      }
+    } else if(i!=1 && !is.null(g.out$w) && !is.null(g.out$wi)) {
       g.out <- glasso::glasso(mycov(x, alternateCov = alternateCov), rho=lam1s[i], start="warm", w.init=g.out$w, wi.init=g.out$wi)
-    } 
+    }
+
+    # g.out values
+    # * w: estimated covariance matrix
+    # * wi: estimated inverse covariance matrix
+
+    # browser()
+    sigma_xx_hat <- g.out$w 
+    theta_xx_hat <- g.out$wi
+
+    # Iterate through lambda 2's
+    # Step 2 in the algorithm
     for(j in 1:length(lam2s)){
-      if (p2==0 || lam2s[j]==0){
+      if (p2 == 0 || lam2s[j] == 0) {
         beta <- g.out$wi %*% mycov(x,y, alternateCov = alternateCov)
-      } else if(p2==1 && lam2s[j]!=0){
-        if(j==1) beta <- lasso_one(g.out$w, mycov(x,y, alternateCov = alternateCov), rho=lam2s[j])$beta
-        if(j!=1){
-          if(sum(abs(beta))!=0 || lam2s[j]<lam2s[j-1]){ 
-            beta <- lasso_one(g.out$w, mycov(x,y, alternateCov = alternateCov), rho=lam2s[j], beta.init=beta)$beta
+      } else if (p2 == 1 && lam2s[j] != 0) {
+        if (j==1) {
+          l_one_res <- lasso_one(g.out$w, mycov(x,y, alternateCov = alternateCov), rho=lam2s[j])
+          beta <- l_one_res$beta
+        }
+        if (j!=1) {
+          if(sum(abs(beta))!= 0 || lam2s[j] < lam2s[j-1]) { 
+            l_one_res <- lasso_one(g.out$w, mycov(x,y, alternateCov = alternateCov), rho=lam2s[j], beta.init=beta)
+            beta <- l_one_res$beta
             # if got zero for smaller value of lambda 2,
             # then no need to keep computing!!!
           }
         }  
-      }  
+      }
       if(rescale && sum(abs(beta))!=0) beta <- beta*lsfit(x%*%beta,y,intercept=FALSE)$coef
       betamat[i,j,] <- beta
     }
@@ -117,23 +172,41 @@ scout2something <- function(x, y, p2, lam1s, lam2s,rescale, trace, alternateCov 
   g.out <- NULL
   betamat <- array(NA, dim=c(length(lam1s), length(lam2s), ncol(x)))
   for(i in 1:length(lam1s)){
-    if(trace) cat(i,fill=F)
-    if(lam1s[i]!=0){
-      if(i==1 || is.null(g.out)) g.out <- gridge(x, rho=lam1s[i])
-      if(i!=1 && !is.null(g.out)) g.out <- gridge(x, rho=lam1s[i], v=g.out$svdstuff$v, thetas=g.out$svdstuff$thetas, u=g.out$svdstuff$u)
+    if (trace) cat(i,fill=F)
+    if (lam1s[i]!=0) {
+      if (i==1 || is.null(g.out)) {
+        g.out <- gridge(x, rho=lam1s[i])
+      }
+      if (i!=1 && !is.null(g.out)) {
+        g.out <- gridge(x, rho=lam1s[i], v=g.out$svdstuff$v, thetas=g.out$svdstuff$thetas, u=g.out$svdstuff$u)
+      }
       for(j in 1:length(lam2s)){
         if (p2==0){
-          beta <- diag(rep(g.out$wistuff$firstdiag, ncol(x))) %*% mycov(x,y, alternateCov = alternateCov) + g.out$wistuff$v %*% (diag(g.out$wistuff$diagsandwich) %*% ((t(g.out$wistuff$v)) %*% mycov(x,y, alternateCov = alternateCov)))
-        } else if(p2!=0 && p2==1){
-          if(j==1) beta <- lasso_one(diag(rep(g.out$wstuff$firstdiag, ncol(x))) + g.out$wstuff$v %*% diag(g.out$wstuff$diagsandwich) %*% t(g.out$wstuff$v), mycov(x,y, alternateCov = alternateCov), rho=lam2s[j])$beta
-          if(j!=1){
-            if(sum(abs(beta))!=0 || lam2s[j]<lam2s[j-1]){
-              beta <- lasso_one(diag(rep(g.out$wstuff$firstdiag, ncol(x))) + g.out$wstuff$v %*% diag(g.out$wstuff$diagsandwich) %*% t(g.out$wstuff$v), mycov(x,y, alternateCov = alternateCov), rho=lam2s[j], beta.init=beta)$beta
+          beta <- diag(rep(g.out$wistuff$firstdiag, ncol(x))) %*% mycov(x,y, alternateCov = alternateCov) + 
+            g.out$wistuff$v %*% (diag(g.out$wistuff$diagsandwich) %*% ((t(g.out$wistuff$v)) %*% mycov(x,y, alternateCov = alternateCov)))
+        } else if (p2!=0 && p2==1) {
+          if (j == 1) {
+            l_one_res <- lasso_one(
+              diag(rep(g.out$wstuff$firstdiag, ncol(x))) + g.out$wstuff$v %*% diag(g.out$wstuff$diagsandwich) %*% t(g.out$wstuff$v), 
+              mycov(x,y, alternateCov = alternateCov), 
+              rho=lam2s[j]
+            )
+            beta <- l_one_res$beta 
+          }
+          if (j != 1) {
+            if (sum(abs(beta))!=0 || lam2s[j]<lam2s[j-1]) {
+              l_one_res <- lasso_one(
+                diag(rep(g.out$wstuff$firstdiag, ncol(x))) + g.out$wstuff$v %*% diag(g.out$wstuff$diagsandwich) %*% t(g.out$wstuff$v), 
+                mycov(x,y, alternateCov = alternateCov), 
+                rho=lam2s[j], 
+                beta.init=beta
+              )
+              beta <- l_one_res$beta
               # If you got zero for a smaller value of
               # lambda2, then no need to keep computing!!!!!!!
             }
           }  
-        }  
+        }
         if(rescale && sum(abs(beta))!=0) beta <- beta*lsfit(x%*%beta,y,intercept=FALSE)$coef
         betamat[i,j,] <- beta
       }
@@ -141,8 +214,13 @@ scout2something <- function(x, y, p2, lam1s, lam2s,rescale, trace, alternateCov 
       if(p2==0) betamat[i,1,] <- lsfit(x,y,intercept=FALSE)$coef
       if(p2==1){
         for(j in 1:length(lam2s)){
-          if(lam2s[j]==0) beta <- lsfit(x,y,intercept=FALSE)$coef
-          if(lam2s[j]!=0) beta <- lasso_one(mycov(x, alternateCov = alternateCov),mycov(x,y, alternateCov = alternateCov), rho=lam2s[j])$beta
+          if (lam2s[j]==0) { 
+            beta <- lsfit(x,y,intercept=FALSE)$coef
+          }
+          if (lam2s[j]!=0) { 
+            l_one_res <- lasso_one(mycov(x, alternateCov = alternateCov),mycov(x,y, alternateCov = alternateCov), rho=lam2s[j])
+            beta <- l_one_res$beta
+          }
           if(sum(abs(beta))!=0 && rescale){
             betamat[i,j,] <- beta*lsfit(x%*%beta,y,intercept=FALSE)$coef
           } else {
@@ -233,13 +311,18 @@ scout <- function(
         betamat[1,j,] <- beta
       } else {
         if(j==1) {
-          beta <- lasso_one(mycov(x, alternateCov = alternateCov), mycov(x,y, alternateCov = alternateCov), rho=lam2s[j])$beta
+          l_one_res <- lasso_one(mycov(x, alternateCov = alternateCov), mycov(x,y, alternateCov = alternateCov), rho=lam2s[j])
+          beta <- l_one_res$beta
+          the_cov <- l_one_res$the_cov
+          # browser()
         }
         if(j!=1) {
           if(sum(abs(beta))!=0 || lam2s[j]<lam2s[j-1]){ 
-            beta <- lasso_one(mycov(x, alternateCov = alternateCov), mycov(x,y, alternateCov = alternateCov), rho=lam2s[j], beta.init=beta)$beta
-                                         # if got zero for smaller value of lambda 2,
-                                         # then no need to keep computing!!!
+            l_one_res <- lasso_one(mycov(x, alternateCov = alternateCov), mycov(x,y, alternateCov = alternateCov), rho=lam2s[j], beta.init=beta)
+            beta <- l_one_res$beta
+            the_cov <- l_one_res$the_cov
+            # if got zero for smaller value of lambda 2,
+            # then no need to keep computing!!!
           }
         }
         if(rescale && sum(abs(beta))!=0) {
@@ -296,8 +379,9 @@ cv.folds <- function(n, folds = 10){
   split(sample(1:n), rep(1:folds, length = n))
 }
 
-cv.scout <- function(x, y, K = 10, lam1s=seq(0.001,.2,len=10),lam2s=seq(0.001,.2,len=10),p1=2,p2=1,
-                     trace = TRUE, plot=TRUE, plotSE=FALSE, rescale=TRUE,...){
+cv.scout <- function(
+  x, y, K = 10, lam1s=seq(0.001,.2,len=10),lam2s=seq(0.001,.2,len=10),p1=2,p2=1,
+  trace = TRUE, plot=TRUE, plotSE=FALSE, rescale=TRUE, alternateCov=NULL, ...){
   call <- match.call()
   if(K==1) stop("You can't do 1-fold cross-validation! Please use K > 1.")
   if(K > length(y)/2) stop("Please choose a value of K between 2 and length(y)/2.")
@@ -310,10 +394,11 @@ cv.scout <- function(x, y, K = 10, lam1s=seq(0.001,.2,len=10),lam2s=seq(0.001,.2
   all.folds <- cv.folds(length(y), K)
   if(length(lam1s)>1 && length(lam2s)>1){
     residmat <- array(0, dim=c(length(lam1s), length(lam2s), K))
+    browser()
     for(i in seq(K)) {
      if(trace) cat("\n CV Fold", i, "\t")
       omit <- all.folds[[i]]
-      fit <- scout(x[ - omit,  ], y[ - omit], newx=x[omit,], p1=p1,p2=p2,lam1s=lam1s,lam2s=lam2s,rescale=rescale, trace=trace)
+      fit <- scout(x[ - omit,  ], y[ - omit], newx=x[omit,], p1=p1,p2=p2,lam1s=lam1s,lam2s=lam2s,rescale=rescale, trace=trace, alternateCov = alternateCov)
       residmat[,,i] <- apply((sweep(fit$yhat,3,y[omit],"-"))^2,c(1,2),mean)
     }
     cv <- apply(residmat, c(1,2), mean)
@@ -339,7 +424,7 @@ cv.scout <- function(x, y, K = 10, lam1s=seq(0.001,.2,len=10),lam2s=seq(0.001,.2
     for(i in seq(K)){
       if(trace) cat("\n CV Fold", i, "\t")
       omit <- all.folds[[i]]
-      fit <-  scout(x[ - omit,  ], y[ - omit], newx=x[omit,], p1=p1,p2=p2,lam1s=lam1,lam2s=lam2s, trace = trace) # TODO: should there be rescale = rescale here??
+      fit <-  scout(x[ - omit,  ], y[ - omit], newx=x[omit,], p1=p1,p2=p2,lam1s=lam1,lam2s=lam2s, trace = trace, alternateCov = alternateCov) # TODO: should there be rescale = rescale here??
       residmat[,i] <- apply(sweep(fit$yhat[1,,],2,y[omit],"-")^2,1,mean)
     }
     cv <- apply(residmat, 1, mean)
@@ -362,7 +447,7 @@ cv.scout <- function(x, y, K = 10, lam1s=seq(0.001,.2,len=10),lam2s=seq(0.001,.2
     for(i in seq(K)){
       if(trace) cat("\n CV Fold", i, "\t")
       omit <- all.folds[[i]]
-      fit <-  scout(x[ - omit,  ], y[ - omit], newx=x[omit,], p1=p1,p2=p2,lam1s=lam1s,lam2s=lam2, trace = trace) # TODO: should there be rescale = rescale here??
+      fit <-  scout(x[ - omit,  ], y[ - omit], newx=x[omit,], p1=p1,p2=p2,lam1s=lam1s,lam2s=lam2, trace = trace, alternateCov = alternateCov) # TODO: should there be rescale = rescale here??
       residmat[,i] <- apply(sweep(fit$yhat[,1,],2,y[omit],"-")^2,1,mean)
     }
     cv <- apply(residmat, 1, mean)

@@ -27,6 +27,9 @@ lasso_one=function(w, ss, rho, thr=1.0e-4, maxit=100,trace=F, beta.init=NULL) {
 
   junk<-.Fortran("lasso7", rho, n, as.matrix(w), ss, thr, xx=beta.init, PACKAGE="scout")
 
-  return(list(beta=junk$xx))
+  return(list(
+    the_cov = junk[[3]], # This is (p x p) but I'm not sure what it is. It's symmetric so is a cov?
+    beta = junk$xx
+  ))
 }
 
