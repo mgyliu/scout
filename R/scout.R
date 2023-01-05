@@ -1,3 +1,13 @@
+mean_cw <- function(x) {
+  locScale.x <- cellWise::estLocScale(x)
+  locScale.x$loc
+}
+scale_cw <- function(x) {
+  locScale.x <- cellWise::estLocScale(x)
+  locScale.x$scale
+}
+
+
 mycov <- function(x, y = NULL, alternateCov = NULL) {
   n = NROW(x)
   p = NCOL(x)
@@ -156,7 +166,9 @@ scout1something <- function(x, y, p2, lam1s, lam2s, rescale,trace, alternateCov 
           }
         }  
       }
-      if(rescale && sum(abs(beta))!=0) beta <- beta*lsfit(x%*%beta,y,intercept=FALSE)$coef
+      if(rescale && sum(abs(beta))!=0) {
+        beta <- beta*lsfit(x%*%beta,y,intercept=FALSE)$coef
+      }
       betamat[i,j,] <- beta
     }
   }
@@ -207,7 +219,9 @@ scout2something <- function(x, y, p2, lam1s, lam2s,rescale, trace, alternateCov 
             }
           }  
         }
-        if(rescale && sum(abs(beta))!=0) beta <- beta*lsfit(x%*%beta,y,intercept=FALSE)$coef
+        if(rescale && sum(abs(beta))!=0) {
+          beta <- beta*lsfit(x%*%beta,y,intercept=FALSE)$coef
+        }
         betamat[i,j,] <- beta
       }
     } else if(lam1s[i]==0){
@@ -264,14 +278,30 @@ scout <- function(
   x <- as.matrix(x)
   if(min(apply(x,2,sd))==0) stop("Please do not enter an x matrix with variables that are constant.")
   # Need to center and scale x,y
-  meany <- mean(y)
-  meanx <- apply(x,2,mean)
+  meany <- ifelse(alternateCov == NULL, mean(y), mean_cw(y))
+  meanx <- ifelse(alternateCov == NULL, apply(x,2,mean), apply(x, 2, mean_cw))
+  # [DONE]: if alternateCov == TRUE, use robust SD (median, MAD)
   if(standardize){
-    sdy <- sd(y)
-    sdx <- apply(x,2,sd)
-    x <- scale(x,T,T)
+    if (alternateCov == NULL) {
+      # Default
+      sdy <- sd(y)
+      sdx <- apply(x,2,sd)
+      # x <- scale(x,T,T)
+    } else {
+      # Use robust centering and scaling 
+      sdy <- scale_cw(y)
+      sdx <- apply(x,2,scale_cw)
+    }
+    x <- scale(x, center = meanx, scale = sdx)
   } else {
-    x <- scale(x,T,F)
+    # Before
+    # x <- scale(x, T, F)
+
+    # After
+    # If alternateCov is not null, then meanx will be a robust colmeans.
+    # If alternateCov is null, then meanx will be the regular colmeans and 
+    #    scale will be as in the "before" version
+    x <- scale(x, center = meanx, F)
     sdx <- rep(1,ncol(x))
     sdy <- 1
   }
