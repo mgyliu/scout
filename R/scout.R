@@ -278,11 +278,11 @@ scout <- function(
   x <- as.matrix(x)
   if(min(apply(x,2,sd))==0) stop("Please do not enter an x matrix with variables that are constant.")
   # Need to center and scale x,y
-  meany <- ifelse(alternateCov == NULL, mean(y), mean_cw(y))
-  meanx <- ifelse(alternateCov == NULL, apply(x,2,mean), apply(x, 2, mean_cw))
+  meany <- ifelse(is.null(alternateCov), mean(y), mean_cw(y))
+  meanx <- ifelse(is.null(alternateCov), apply(x,2,mean), apply(x, 2, mean_cw))
   # [DONE]: if alternateCov == TRUE, use robust SD (median, MAD)
   if(standardize){
-    if (alternateCov == NULL) {
+    if (is.null(alternateCov)) {
       # Default
       sdy <- sd(y)
       sdx <- apply(x,2,sd)
