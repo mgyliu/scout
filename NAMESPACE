@@ -1,4 +1,4 @@
-export(scout,cv.scout,crossProdLasso)
+export(scout,cv.scout,cv2.scout,crossProdLasso)
 useDynLib(scout)
 S3method(print,scoutobject)
 S3method(print,cvobject)
