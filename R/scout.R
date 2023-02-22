@@ -63,7 +63,6 @@ mycov <- function(x, y = NULL, alternateCov = NULL) {
 # returns: (nlam1 x nlam2) matrix of computed metrics
 #          corresponds to the metric for each lam1, lam2 combination
 compute_cv_metric <- function(yhat, ytrue, metric = "mse") {
-  browser()
   lengths_match <- all(apply(yhat, c(1,2), length) == length(ytrue))
   stopifnot("yhat and ytrue dimension mismatch" = lengths_match)
   
@@ -475,7 +474,6 @@ cv.scout <- function(
     # 
     # Next line averages out the MSPE over the folds
     cv <- apply(residmat, c(1,2), mean)
-    browser()
     # TODO: cv.error using `var` which is not robust.
     # use robust measures inside CV here
     cv.error <- sqrt(apply(residmat, c(1,2), var)/K)
