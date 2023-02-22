@@ -2,11 +2,11 @@ mean_cw <- function(x) {
   locScale.x <- cellWise::estLocScale(x)
   locScale.x$loc
 }
+
 scale_cw <- function(x) {
   locScale.x <- cellWise::estLocScale(x)
   locScale.x$scale
 }
-
 
 mycov <- function(x, y = NULL, alternateCov = NULL) {
   n = NROW(x)
@@ -56,6 +56,27 @@ mycov <- function(x, y = NULL, alternateCov = NULL) {
   }
 
   return(stats::cov(x, y))
+}
+
+# yhat: array of dim (n_lam1 x n_lam2 x n_obs)
+# ytrue: vector of length n_obs
+# returns: (nlam1 x nlam2) matrix of computed metrics
+#          corresponds to the metric for each lam1, lam2 combination
+compute_cv_metric <- function(yhat, ytrue, metric = "mse") {
+  browser()
+  lengths_match <- all(apply(yhat, c(1,2), length) == length(ytrue))
+  stopifnot("yhat and ytrue dimension mismatch" = lengths_match)
+  
+  if (metric == "mse") {
+    # For each (lam1, lam2), compute yhat - ytrue
+    # resids is (n_lam1 x n_lam2 x n_omit)
+    resids <- sweep(yhat, MARGIN = 3, STATS = ytrue, FUN = "-")
+    sq_resids <- resids^2
+    # For each (lam1, lam2), compute the MSE
+    return(apply(sq_resids, c(1,2), mean))
+  } 
+
+  stop(paste("cv metric", metric, "not yet implemented"))
 }
 
 # x: data
@@ -142,7 +163,6 @@ scout1something <- function(x, y, p2, lam1s, lam2s, rescale,trace, intercept = F
     # * w: estimated covariance matrix
     # * wi: estimated inverse covariance matrix
 
-    # browser()
     sigma_xx_hat <- g.out$w 
     theta_xx_hat <- g.out$wi
 
@@ -351,7 +371,6 @@ scout <- function(
           l_one_res <- lasso_one(mycov(x, alternateCov = alternateCov), mycov(x,y, alternateCov = alternateCov), rho=lam2s[j])
           beta <- l_one_res$beta
           the_cov <- l_one_res$the_cov
-          # browser()
         }
         if(j!=1) {
           if(sum(abs(beta))!=0 || lam2s[j]<lam2s[j-1]){ 
@@ -417,8 +436,13 @@ cv.folds <- function(n, folds = 10){
 }
 
 cv.scout <- function(
-  x, y, K = 10, lam1s=seq(0.001,.2,len=10),lam2s=seq(0.001,.2,len=10),p1=2,p2=1,
-  trace = TRUE, plot=TRUE, plotSE=FALSE, rescale=TRUE, alternateCov=NULL, ...){
+  x, y, 
+  K = 10, 
+  lam1s = seq(0.001, 0.2, len=10), 
+  lam2s = seq(0.001, 0.2, len=10), 
+  p1 = 2, p2 = 1,
+  trace = TRUE, plot=TRUE, plotSE = FALSE, 
+  rescale = TRUE, alternateCov = NULL, ...) {
   call <- match.call()
   if(K==1) stop("You can't do 1-fold cross-validation! Please use K > 1.")
   if(K > length(y)/2) stop("Please choose a value of K between 2 and length(y)/2.")
@@ -429,16 +453,31 @@ cv.scout <- function(
   lam2s <- c(lam2s)
   if(length(lam1s)<2 && length(lam2s)<2) stop("Not a reasonable range of lambdas over which to be cross-validating")
   all.folds <- cv.folds(length(y), K)
-  if(length(lam1s)>1 && length(lam2s)>1){
+
+  if (length(lam1s)>1 && length(lam2s)>1) {
     residmat <- array(0, dim=c(length(lam1s), length(lam2s), K))
-    browser()
-    for(i in seq(K)) {
-     if(trace) cat("\n CV Fold", i, "\t")
+
+    for (i in seq(K)) {
+      if (trace) cat("\n CV Fold", i, "\t")
       omit <- all.folds[[i]]
-      fit <- scout(x[ - omit,  ], y[ - omit], newx=x[omit,], p1=p1,p2=p2,lam1s=lam1s,lam2s=lam2s,rescale=rescale, trace=trace, alternateCov = alternateCov)
-      residmat[,,i] <- apply((sweep(fit$yhat,3,y[omit],"-"))^2,c(1,2),mean)
+      fit <- scout(x[ - omit,  ], y[ - omit], newx=x[omit,], p1=p1, p2=p2, lam1s=lam1s,  lam2s=lam2s,rescale=rescale, trace=trace, alternateCov = alternateCov)
+      # For each (lam1, lam2), compute yhat - ytrue
+      # resids is (n_lam1 x n_lam2 x n_omit)
+      resids <- sweep(fit$yhat, MARGIN = 3, STATS = y[omit], FUN = "-")
+      sq_resids <- resids^2
+      # For each (lam1, lam2), compute the MSE
+      residmat[,,i] <- apply(sq_resids, c(1,2), mean)
     }
+
+    # Now residmat is a (n_lam1 x n_lam2 x K) matrix 
+    # For each lam1, lam2, and fold, residmat stores the MSPE from evaluating
+    # the model on that fold
+    # 
+    # Next line averages out the MSPE over the folds
     cv <- apply(residmat, c(1,2), mean)
+    browser()
+    # TODO: cv.error using `var` which is not robust.
+    # use robust measures inside CV here
     cv.error <- sqrt(apply(residmat, c(1,2), var)/K)
     object<-list(p1=p1,p2=p2,lam1s=lam1s,lam2s=lam2s, cv = cv, cv.error = cv.error, call=call, bestlam1=lam1s[which.min(apply(cv,1,min))], bestlam2=lam2s[which.min(apply(cv,2,min))])
     if(plot){
@@ -461,7 +500,7 @@ cv.scout <- function(
     for(i in seq(K)){
       if(trace) cat("\n CV Fold", i, "\t")
       omit <- all.folds[[i]]
-      fit <-  scout(x[ - omit,  ], y[ - omit], newx=x[omit,], p1=p1,p2=p2,lam1s=lam1,lam2s=lam2s, trace = trace, alternateCov = alternateCov) # TODO: should there be rescale = rescale here??
+      fit <-  scout(x[ - omit,  ], y[ - omit], newx=x[omit,], p1=p1, p2=p2, lam1s=lam1, lam2s=lam2s, rescale=rescale, trace = trace, alternateCov = alternateCov)
       residmat[,i] <- apply(sweep(fit$yhat[1,,],2,y[omit],"-")^2,1,mean)
     }
     cv <- apply(residmat, 1, mean)
@@ -482,9 +521,9 @@ cv.scout <- function(
     lam2 <- lam2s[1]
     residmat <- matrix(0,nrow=length(lam1s),ncol=K)
     for(i in seq(K)){
-      if(trace) cat("\n CV Fold", i, "\t")
+      if (trace) cat("\n CV Fold", i, "\t")
       omit <- all.folds[[i]]
-      fit <-  scout(x[ - omit,  ], y[ - omit], newx=x[omit,], p1=p1,p2=p2,lam1s=lam1s,lam2s=lam2, trace = trace, alternateCov = alternateCov) # TODO: should there be rescale = rescale here??
+      fit <-  scout(x[ - omit,  ], y[ - omit], newx=x[omit,], p1=p1,p2=p2,lam1s=lam1s,lam2s=lam2, trace = trace, rescle = rescale, alternateCov = alternateCov)
       residmat[,i] <- apply(sweep(fit$yhat[,1,],2,y[omit],"-")^2,1,mean)
     }
     cv <- apply(residmat, 1, mean)
@@ -505,6 +544,66 @@ cv.scout <- function(
   if(trace) cat("\n")
   object$call <- call
   object$folds <- all.folds
+  class(object) <- "cvobject"
+  invisible(object)
+}
+
+# Same as cv.scout but without plotting functions
+# Shorter because I got rid of the cases depending on number of lambda1 and lambda2
+# The result is exactly the same
+cv2.scout <- function(
+  x, y, 
+  K = 10, 
+  lam1s = seq(0.001, 0.2, len=10), 
+  lam2s = seq(0.001, 0.2, len=10), 
+  p1 = 2, p2 = 1,
+  trace = TRUE,
+  rescale = TRUE, 
+  alternateCov = NULL, 
+  cvmetric = "mse",
+  ...) {
+  call <- match.call()
+  if(K==1) stop("You can't do 1-fold cross-validation! Please use K > 1.")
+  if(K > length(y)/2) stop("Please choose a value of K between 2 and length(y)/2.")
+  if(p1==0 && p2==0) stop("Why would you want to cross-validate least squares?")
+  if(is.null(p1)) lam1s <- 0
+  if(is.null(p2)) lam2s <- 0
+  lam1s <- c(lam1s)
+  lam2s <- c(lam2s)
+  if(length(lam1s)<2 && length(lam2s)<2) stop("Not a reasonable range of lambdas over which to be cross-validating")
+  all.folds <- cv.folds(length(y), K)
+
+  residmat <- array(0, dim=c(length(lam1s), length(lam2s), K))
+
+  for (i in seq(K)) {
+    if (trace) cat("\n CV Fold", i, "\t")
+    omit <- all.folds[[i]]
+    fit <- scout(x[ - omit,  ], y[ - omit], newx=x[omit,], p1=p1, p2=p2, lam1s=lam1s,  lam2s=lam2s,rescale=rescale, trace=trace, alternateCov = alternateCov)
+
+    residmat[,,i] <- compute_cv_metric(fit$yhat, y[omit], cvmetric)
+  }
+
+  # Now residmat is a (n_lam1 x n_lam2 x K) matrix 
+  # For each lam1, lam2, and fold, residmat stores the MSPE from evaluating
+  # the model on that fold
+  # 
+  # Next line averages out the MSPE over the folds
+  cv <- apply(residmat, c(1,2), mean)
+
+  cv.error <- sqrt(apply(residmat, c(1,2), var)/K)
+  object<-list(
+    p1 = p1,
+    p2 = p2,
+    lam1s = lam1s,
+    lam2s = lam2s, 
+    cv = cv, 
+    cv.error = cv.error, 
+    call = call,
+    folds = all.folds,
+    bestlam1 = lam1s[which.min(apply(cv,1,min))], 
+    bestlam2 = lam2s[which.min(apply(cv,2,min))])
+
+  if(trace) cat("\n")
   class(object) <- "cvobject"
   invisible(object)
 }
