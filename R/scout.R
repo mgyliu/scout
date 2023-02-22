@@ -58,7 +58,6 @@ mycov <- function(x, y = NULL, alternateCov = NULL) {
   return(stats::cov(x, y))
 }
 
-# TODO: trying to figure out what this is doing...
 # x: data
 # rho: lambda_1
 # v: svdstuff$v 
@@ -100,7 +99,7 @@ gridge <- function(x, rho=0, v=NULL, thetas=NULL, u=NULL){
 }
 
 
-scout1something <- function(x, y, p2, lam1s, lam2s, rescale,trace, alternateCov = NULL){
+scout1something <- function(x, y, p2, lam1s, lam2s, rescale,trace, intercept = FALSE, alternateCov = NULL){
   if (ncol(x)>500) {
     print("You are running scout with p1=1 and ncol(x) > 500. This will be slow. You may want to re-start and use p1=2, which is much faster.")
   }
@@ -167,7 +166,7 @@ scout1something <- function(x, y, p2, lam1s, lam2s, rescale,trace, alternateCov 
         }  
       }
       if(rescale && sum(abs(beta))!=0) {
-        beta <- beta*lsfit(x%*%beta,y,intercept=FALSE)$coef
+        beta <- beta*lsfit(x%*%beta,y,intercept=intercept)$coef
       }
       betamat[i,j,] <- beta
     }
@@ -176,7 +175,7 @@ scout1something <- function(x, y, p2, lam1s, lam2s, rescale,trace, alternateCov 
 }
 
 
-scout2something <- function(x, y, p2, lam1s, lam2s,rescale, trace, alternateCov = NULL){
+scout2something <- function(x, y, p2, lam1s, lam2s,rescale, trace, intercept = FALSE, alternateCov = NULL){
   if(sum(order(lam2s)==(1:length(lam2s)))!=length(lam2s)){
     stop("Error!!!! lam2s must be ordered!!!")
   }
@@ -220,23 +219,23 @@ scout2something <- function(x, y, p2, lam1s, lam2s,rescale, trace, alternateCov 
           }  
         }
         if(rescale && sum(abs(beta))!=0) {
-          beta <- beta*lsfit(x%*%beta,y,intercept=FALSE)$coef
+          beta <- beta*lsfit(x%*%beta,y,intercept=intercept)$coef
         }
         betamat[i,j,] <- beta
       }
     } else if(lam1s[i]==0){
-      if(p2==0) betamat[i,1,] <- lsfit(x,y,intercept=FALSE)$coef
+      if(p2==0) betamat[i,1,] <- lsfit(x,y,intercept=intercept)$coef
       if(p2==1){
         for(j in 1:length(lam2s)){
           if (lam2s[j]==0) { 
-            beta <- lsfit(x,y,intercept=FALSE)$coef
+            beta <- lsfit(x,y,intercept=intercept)$coef
           }
           if (lam2s[j]!=0) { 
             l_one_res <- lasso_one(mycov(x, alternateCov = alternateCov),mycov(x,y, alternateCov = alternateCov), rho=lam2s[j])
             beta <- l_one_res$beta
           }
           if(sum(abs(beta))!=0 && rescale){
-            betamat[i,j,] <- beta*lsfit(x%*%beta,y,intercept=FALSE)$coef
+            betamat[i,j,] <- beta*lsfit(x%*%beta,y,intercept=intercept)$coef
           } else {
             betamat[i,j,] <- beta
           }
@@ -270,7 +269,8 @@ predict.scoutobject <- function(object, newx, ...){
 scout <- function(
   x, y, newx = NULL, p1 = 2, p2 = 1, 
   lam1s = seq(.001, .2, len=10), lam2s = seq(.001, .2, len=10), 
-  rescale = TRUE, trace = TRUE, standardize = TRUE, alternateCov = NULL) {
+  rescale = TRUE, trace = TRUE, standardize = TRUE, 
+  intercept = FALSE, alternateCov = NULL) {
   call <- match.call()
   if(!is.null(p1) && p1!=1 && p1!=2) stop("p1 must be 1, 2, or NULL.")
   if(!is.null(p2) && p2!=1) stop("p1 must be 1 or NULL.")
@@ -344,7 +344,7 @@ scout <- function(
       if(trace) cat(j,fill=F)
       if(lam2s[j]==0){
         if(ncol(x)>=nrow(x)) stop("Cannot do Least Squares when ncol(x)>=nrow(x)")
-        beta <- lsfit(x,y,intercept=FALSE)$coef
+        beta <- lsfit(x,y,intercept=intercept)$coef
         betamat[1,j,] <- beta
       } else {
         if(j==1) {
@@ -363,7 +363,7 @@ scout <- function(
           }
         }
         if(rescale && sum(abs(beta))!=0) {
-          beta <- beta*lsfit(x%*%beta,y,intercept=FALSE)$coef
+          beta <- beta*lsfit(x%*%beta,y,intercept=intercept)$coef
         }
         betamat[1,j,] <- beta
       }
