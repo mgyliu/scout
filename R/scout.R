@@ -65,19 +65,29 @@ mycov <- function(x, y = NULL, alternateCov = NULL) {
 compute_cv_metric <- function(yhat, ytrue, metric = "mse") {
   lengths_match <- all(apply(yhat, c(1,2), length) == length(ytrue))
   stopifnot("yhat and ytrue dimension mismatch" = lengths_match)
+
+  # For each (lam1, lam2), compute yhat - ytrue
+  # resids is (n_lam1 x n_lam2 x n_omit)
+  resids <- sweep(yhat, MARGIN = 3, STATS = ytrue, FUN = "-")
   
   if (metric == "mse") {
-    # For each (lam1, lam2), compute yhat - ytrue
-    # resids is (n_lam1 x n_lam2 x n_omit)
-    resids <- sweep(yhat, MARGIN = 3, STATS = ytrue, FUN = "-")
     sq_resids <- resids^2
     # For each (lam1, lam2), compute the MSE
     return(apply(sq_resids, c(1,2), mean))
   } 
 
   else if (metric == "tau_size") {
-    resids <- sweep(yhat, MARGIN = 3, STATS = ytrue, FUN = "-")
     return(apply(resids, c(1,2), pense::tau_size))
+  }
+
+  # median absolute prediction error
+  else if (metric == "median_ape") {
+    return(apply(resids, c(1,2), function(r) median(abs(r))))
+  }
+
+  # mean absolute prediction error
+  else if (metric == "mean_ape") {
+    return(apply(resids, c(1,2), function(r) mean(abs(r))))
   }
 
   stop(paste("cv metric", metric, "not yet implemented"))
