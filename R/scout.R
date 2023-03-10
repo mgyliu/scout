@@ -13,14 +13,20 @@ mycov <- function(x, y = NULL, alternateCov = NULL) {
   p = NCOL(x)
   q = NCOL(y)
 
-  options = c("mcd", "cellwise", "mve")
+  if (is.null(alternateCov)) {
+    return(stats::cov(x, y))
+  }
 
+  # At this point we know alternateCov is not null
+  stopifnot("alternateCov must be a character type" = class(alternateCov) == "character")
+
+  options = c("mcd", "cellwise", "mve")
   stopifnot(alternateCov %in% options)
 
-  if (sum(alternateCov == "cellwise") > 0) {
+  if (alternateCov == "cellwise") {
     locScale.x <- cellWise::estLocScale(x)
     # the wrapped data is stored in $Xw. covariances get computed on this.
-    Xw.x <- cellWise::wrap(x, locScale.x$loc, locScale.x$scale)$Xw    
+    Xw.x <- cellWise::wrap(x, locScale.x$loc, locScale.x$scale)$Xw
     if (is.null(y)) {
       cov_cellwise <- cov(Xw.x)
     } else {
@@ -31,7 +37,7 @@ mycov <- function(x, y = NULL, alternateCov = NULL) {
     return(cov_cellwise)
   }
 
-  if (sum(alternateCov == "mcd") > 0) {    
+  if (alternateCov == "mcd") {    
     if (is.null(y)) {
       cov_mcd <- robustbase::covMcd(x)$cov  # Cov(X,X)
     } else {
@@ -43,7 +49,7 @@ mycov <- function(x, y = NULL, alternateCov = NULL) {
     return(cov_mcd)
   }
 
-  if (sum(alternateCov == "mve") > 0) {
+  if (alternateCov == "mve") {
     if (is.null(y)) {
       cov_mve <- rrcov::CovMve(x)$cov
     } else {
@@ -55,7 +61,39 @@ mycov <- function(x, y = NULL, alternateCov = NULL) {
     return(cov_mve)
   }
 
-  return(stats::cov(x, y))
+  stop(paste("alternateCov = ", alternateCov, " not yet implemented!", sep = ""))
+}
+
+# Returns list of x, y, meanx, meany, sdx, sdy
+mystandardize <- function(x, y, standardize = FALSE, alternateCov = NULL) {
+  # Default
+  meanx <- apply(x, 2, mean)
+  meany <- mean(y)
+  
+  sdx <- apply(x, 2, sd)
+  sdy <- sd(y)
+
+  # Use robust centering and scaling  
+  if (!is.null(alternateCov)) {
+    meanx <- apply(x, 2, mean_cw)
+    meany <- mean_cw(y)
+
+    sdx <- apply(x, 2, scale_cw)
+    sdy <- scale_cw(y)
+  }
+
+  if (standardize) {
+    x <- scale(x, center = meanx, scale = sdx)
+  } else {
+    x <- scale(x, center = meanx, F)
+    sdx <- rep(1, ncol(x))
+    sdy <- 1
+  }
+  # Scale and center the Y regardless
+  # Original standardize code is here: https://github.com/cran/scout/blob/master/R/scout.R#L136-L147
+  y <- (y - meany)/sdy
+
+  return(list(x=x, y=y, meanx=meanx, meany=meany, sdx=sdx, sdy=sdy))
 }
 
 # yhat: array of dim (n_lam1 x n_lam2 x n_obs)
@@ -200,6 +238,7 @@ scout1something <- function(x, y, p2, lam1s, lam2s, rescale,trace, intercept = F
         }  
       }
       if(rescale && sum(abs(beta))!=0) {
+        # Step 4: rescale beta_hat* = c * beta_hat
         beta <- beta*lsfit(x%*%beta,y,intercept=intercept)$coef
       }
       betamat[i,j,] <- beta
@@ -311,42 +350,16 @@ scout <- function(
   if((sum(is.na(x)) + sum(is.na(y)))>0) stop("Please fix the NAs in your data set first. Missing values can be imputed using library 'impute'.")
   x <- as.matrix(x)
   if(min(apply(x,2,sd))==0) stop("Please do not enter an x matrix with variables that are constant.")
-  # Need to center and scale x,y
-  if (is.null(alternateCov)) {
-    meany <- mean(y)
-    meanx <- apply(x, 2, mean)
-  } else {
-    meany <- mean_cw(y)
-    meanx <- apply(x, 2, mean_cw)
-  }
-  # meany <- ifelse(is.null(alternateCov), mean(y), mean_cw(y))
-  # meanx <- ifelse(is.null(alternateCov), apply(x, 2, mean), apply(x, 2, mean_cw))
-  # [DONE]: if alternateCov == TRUE, use robust SD (median, MAD)
-  if(standardize){
-    if (is.null(alternateCov)) {
-      # Default
-      sdy <- sd(y)
-      sdx <- apply(x,2,sd)
-      # x <- scale(x,T,T)
-    } else {
-      # Use robust centering and scaling 
-      sdy <- scale_cw(y)
-      sdx <- apply(x,2,scale_cw)
-    }
-    x <- scale(x, center = meanx, scale = sdx)
-  } else {
-    # Before
-    # x <- scale(x, T, F)
 
-    # After
-    # If alternateCov is not null, then meanx will be a robust colmeans.
-    # If alternateCov is null, then meanx will be the regular colmeans and 
-    #    scale will be as in the "before" version
-    x <- scale(x, center = meanx, F)
-    sdx <- rep(1,ncol(x))
-    sdy <- 1
-  }
-  y <- (y-meany)/sdy
+  # do standardization if needed
+  std_result <- mystandardize(x, y, standardize, alternateCov)
+  meanx <- std_result$meanx
+  meany <- std_result$meany
+  sdx <- std_result$sdx
+  sdy <- std_result$sdy
+  x <- std_result$x 
+  y <- std_result$y
+
   # Want to re-order lam2s in increasing order
   if(length(lam2s)>0){
     lam2s.orig <- lam2s

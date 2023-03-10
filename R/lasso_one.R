@@ -25,6 +25,12 @@ lasso_one=function(w, ss, rho, thr=1.0e-4, maxit=100,trace=F, beta.init=NULL) {
   mode(thr)="single"
   mode(beta.init)="single"
 
+  # rho: penalty
+  # n: size 
+  # w: cov(x) 
+  # s: cov(x,y) 
+  # thr: threshold
+  # xx: initial beta estimate
   junk<-.Fortran("lasso7", rho, n, as.matrix(w), ss, thr, xx=beta.init, PACKAGE="scout")
 
   return(list(
