@@ -65,7 +65,7 @@ mycov <- function(x, y = NULL, alternateCov = NULL) {
 }
 
 # Returns list of x, y, meanx, meany, sdx, sdy
-mystandardize <- function(x, y, standardize = FALSE, alternateCov = NULL) {
+mystandardize <- function(x, y, standardize = TRUE, alternateCov = NULL) {
   # Default
   meanx <- apply(x, 2, mean)
   meany <- mean(y)
