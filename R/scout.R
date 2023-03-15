@@ -244,7 +244,8 @@ scout1something <- function(x, y, p2, lam1s, lam2s, rescale,trace, intercept = F
       betamat[i,j,] <- beta
     }
   }
-  return(betamat)
+  
+  list(betamat = betamat, g.out = g.out)
 }
 
 
@@ -316,7 +317,7 @@ scout2something <- function(x, y, p2, lam1s, lam2s,rescale, trace, intercept = F
       }
     }
   }
-  return(betamat)
+  list(betamat = betamat, g.out = g.out)
 }
 
 
@@ -415,9 +416,13 @@ scout <- function(
       }
     }  
   } else if(p1==1){
-    betamat <- scout1something(x, y, p2, lam1s, lam2s, rescale, trace, alternateCov = alternateCov)
+    scout1something_res <- scout1something(x, y, p2, lam1s, lam2s, rescale, trace, alternateCov = alternateCov)
+    betamat <- scout1something_res$betamat
+    g.out <- scout1something_res$g.out
   } else if (p1==2){
-    betamat <- scout2something(x, y, p2, lam1s, lam2s, rescale, trace, alternateCov = alternateCov)
+    scout2something_res <- scout2something(x, y, p2, lam1s, lam2s, rescale, trace, alternateCov = alternateCov)
+    betamat <- scout2something_res$betamat
+    g.out <- scout2something_res$g.out
   } 
   interceptmat <- matrix(meany,nrow=length(lam1s),ncol=length(lam2s))
   for(i in 1:length(lam1s)){
@@ -431,7 +436,16 @@ scout <- function(
    dim = c(length(lam1s.orig), length(lam2s.orig), ncol(x))
   )
   interceptmat <- matrix(interceptmat[rank(lam1s.orig),rank(lam2s.orig)],nrow=length(lam1s.orig),ncol=length(lam2s.orig))
-  scout.obj <- (list(intercepts=interceptmat,coefficients=betamat,p1=p1,p2=p2,lam1s=lam1s.orig,lam2s=lam2s.orig, yhat=NULL,call=call))
+  scout.obj <- (list(
+    intercepts=interceptmat,
+    coefficients=betamat,
+    p1=p1,
+    p2=p2,
+    lam1s=lam1s.orig,
+    lam2s=lam2s.orig,
+    gout=g.out,
+    yhat=NULL,
+    call=call))
   class(scout.obj) <- "scoutobject"
   if(!is.null(newx)){
     yhat <- predict.scoutobject(scout.obj,newx)
