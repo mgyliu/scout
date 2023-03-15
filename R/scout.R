@@ -213,10 +213,7 @@ scout1something <- function(x, y, p2, lam1s, lam2s, rescale,trace, intercept = F
 
     # g.out values
     # * w: estimated covariance matrix
-    # * wi: estimated inverse covariance matrix
-
-    sigma_xx_hat <- g.out$w 
-    theta_xx_hat <- g.out$wi
+    # * wi: estimated inverse covariance matrix    
 
     # Iterate through lambda 2's
     # Step 2 in the algorithm
@@ -384,6 +381,8 @@ scout <- function(
   if(ncol(x) >= nrow(x) && p1==0 && p2==0){
       stop("p1 and p2 cannot both be zero when p>n.")
   }
+
+  g.out <- NULL
 
   # Conditions on p1 start here
   if(p1==0){
