@@ -1,4 +1,12 @@
-export(scout,cv.scout,cv2.scout,mycov,crossProdLasso)
+export(
+  crossProdLasso,
+  scout,
+  cv.scout,
+  cv2.scout,
+  rob_cov,
+  rob_standardize,
+  get_lambda1_path,
+  get_lambda2_path)
 useDynLib(scout)
 S3method(print,scoutobject)
 S3method(print,cvobject)
