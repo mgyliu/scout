@@ -14,7 +14,7 @@ values, rather than an entire grid) can be specified.
 }
 \usage{
 scout(x,y,newx,p1=2,p2=1,lam1s=seq(.001,.2,len=10),lam2s=seq(.001,.2,len=10),
-   rescale=TRUE, trace=TRUE,standardize=TRUE, alternateCov=NULL)
+   rescale=TRUE, trace=TRUE,standardize=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

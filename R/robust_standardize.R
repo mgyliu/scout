@@ -8,7 +8,7 @@ scale_cw <- function(x) {
   locScale.x$scale
 }
 
-# Returns list of x, y, meanx, meany, sdx, sdy
+#' Returns list of x, y, meanx, meany, sdx, sdy
 #' @param x A matrix, n x p
 #' @param y A vector or n x 1 matrix
 #' @param standardize TRUE or FALSE, indicating whether standardization should occur.

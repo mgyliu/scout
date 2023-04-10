@@ -14,3 +14,4 @@ NeedsCompilation: yes
 Packaged: 2015-07-09 16:41:41 UTC; dwitten
 Repository: CRAN
 Date/Publication: 2015-07-10 20:41:38
+RoxygenNote: 7.1.2
