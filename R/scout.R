@@ -462,9 +462,13 @@ cv.scout <- function(x, y,
 # The result is exactly the same
 cv2.scout <- function(x, y, p1 = 2, p2 = 1,
                       K = 10,
+                      # Lambda 1 arguments
                       nlambda1 = 100, lambda1_min_ratio = 0.001,
-                      nlambda2 = 100, lambda2_min_ratio = 0.001,
+                      lamda1_max_desc_frac = 0.8, lambda1_max_iter = 100,
                       lam1s = NULL,
+                      # Lambda 2 arguments
+                      nlambda2 = 100, lambda2_min_ratio = 0.001,
+                      lamda2_max_desc_frac = 0.8, lambda2_max_iter = 100,
                       lam2s = NULL,
                       trace = FALSE,
                       rescale = TRUE,
@@ -477,30 +481,29 @@ cv2.scout <- function(x, y, p1 = 2, p2 = 1,
   if (K > length(y) / 2) stop("Please choose a value of K between 2 and length(y)/2.")
   if (p1 == 0 && p2 == 0) stop("Why would you want to cross-validate least squares?")
 
-  # if (is.null(p1)) lam1s <- 0
   std_result <- rob_standardize(x, y, alternateCov = alternateCov)
 
   if (is.null(lam1s)) {
     lam1s <- get_lambda1_path(
       std_result$x, p1,
+      alternateCov = alternateCov,
       nlambda = nlambda1,
-      lambda_min_ratio = lambda1_min_ratio,
-      alternateCov = alternateCov
+      lambda_min_ratio = lambda1_min_ratio
     )
   }
   if (is.null(lam2s)) {
     lam2s <- get_lambda2_path(
-      std_result$x, std_result$y, p1, p2,
+      std_result$x, std_result$y, p2,
+      alternateCov = alternateCov,
       nlambda = nlambda2,
-      lambda_min_ratio = lambda2_min_ratio,
-      alternateCov = alternateCov
+      lambda_min_ratio = lambda2_min_ratio
     )
   }
 
   if (length(lam1s) < 2 && length(lam2s) < 2) stop("Not a reasonable range of lambdas over which to be cross-validating")
   all.folds <- cv.folds(length(y), K)
 
-  residmat <- array(0, dim = c(nlambda1, nlambda2, K))
+  residmat <- array(0, dim = c(length(lam1s), length(lam2s), K))
 
   for (i in seq(K)) {
     if (trace) cat("\n CV Fold", i, "\t")
@@ -513,11 +516,12 @@ cv2.scout <- function(x, y, p1 = 2, p2 = 1,
   # Now residmat is a (n_lam1 x n_lam2 x K) matrix
   # For each lam1, lam2, and fold, residmat stores the MSPE from evaluating
   # the model on that fold
-  #
+
   # Next line averages out the MSPE over the folds
   cv <- apply(residmat, c(1, 2), mean)
 
   cv.error <- sqrt(apply(residmat, c(1, 2), var) / K)
+
   object <- list(
     p1 = p1,
     p2 = p2,
