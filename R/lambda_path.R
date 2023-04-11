@@ -81,7 +81,7 @@ is_off_diag_zero <- function(mat) {
 get_lambda1_max_glasso <- function(X, alternateCov = "default",
                                    desc_frac = 0.8, max_iter = 100) {
   if (alternateCov == "default") {
-    XTX <- abs(t(X_train) %*% X_train)
+    XTX <- abs(t(X) %*% X)
   } else {
     Xw <- cellWise::wrap(X)$Xw
     XTX <- abs(t(Xw) %*% Xw)
@@ -94,7 +94,7 @@ get_lambda1_max_glasso <- function(X, alternateCov = "default",
   cond <- TRUE
   # lambda1_max is the last lambda1_max that makes all off-diagonal elements equal to zero
   while (cond & iter < max_iter) {
-    g.out <- glasso::glasso(rob_cov(X_train, alternateCov = alternateCov), rho = lambda1_max_tmp)
+    g.out <- glasso::glasso(rob_cov(X, alternateCov = alternateCov), rho = lambda1_max_tmp)
     cond <- is_off_diag_zero(g.out$w)
     if (cond) {
       lambda1_max <- lambda1_max_tmp
