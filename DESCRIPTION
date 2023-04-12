@@ -7,7 +7,9 @@ Date: 2015-07-09
 Author: Daniela M. Witten and Robert Tibshirani
 Maintainer: Daniela M. Witten <dwitten@uw.edu>
 Imports: glasso, stats, grDevices, graphics
-Suggests: lars
+Suggests: 
+    lars,
+    testthat (>= 3.0.0)
 Description: Implements the Scout method for regression, described in "Covariance-regularized regression and classification for high-dimensional problems", by Witten and Tibshirani (2008),  Journal of the Royal Statistical Society, Series B 71(3): 615-636. 
 License: GPL (>= 2)
 NeedsCompilation: yes
@@ -15,3 +17,4 @@ Packaged: 2015-07-09 16:41:41 UTC; dwitten
 Repository: CRAN
 Date/Publication: 2015-07-10 20:41:38
 RoxygenNote: 7.1.2
+Config/testthat/edition: 3
