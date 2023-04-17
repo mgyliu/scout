@@ -79,7 +79,8 @@ is_off_diag_zero <- function(mat) {
 #' entries. The diagonal matrix will have diagonal entries
 #' 1/(lambda1_max + x_i^T * x_i)
 get_lambda1_max_glasso <- function(X, alternateCov = "default",
-                                   desc_frac = 0.8, max_iter = 100) {
+                                   desc_frac = 0.8, max_iter = 100,
+                                   use_huge = TRUE) {
   if (alternateCov == "default") {
     XTX <- abs(t(X) %*% X)
   } else {
@@ -94,16 +95,22 @@ get_lambda1_max_glasso <- function(X, alternateCov = "default",
   cond <- TRUE
   # lambda1_max is the last lambda1_max that makes all off-diagonal elements equal to zero
   while (cond & iter < max_iter) {
-    g.out <- glasso::glasso(rob_cov(X, alternateCov = alternateCov), rho = lambda1_max_tmp)
-    cond <- is_off_diag_zero(g.out$w)
+    covx <- rob_cov(X, alternateCov = alternateCov)
+
+    cond <- if (use_huge) {
+      hg.out <- huge::huge.glasso(covx, lambda = lambda1_max_tmp, verbose = FALSE)
+      is_off_diag_zero(hg.out$icov[[1]])
+    } else {
+      gg.out <- glasso::glasso(covx, rho = lambda1_max_tmp)
+      is_off_diag_zero(gg.out$w)
+    }
+
     if (cond) {
       lambda1_max <- lambda1_max_tmp
       lambda1_max_tmp <- lambda1_max_tmp * desc_frac
     }
     iter <- iter + 1
   }
-
-  # rlog::log_info(paste0("In get_lambda1_max_glasso: Number of iterations: ", iter, ". max_iter was ", max_iter))
 
   lambda1_max
 }

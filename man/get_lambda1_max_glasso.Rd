@@ -10,7 +10,8 @@ get_lambda1_max_glasso(
   X,
   alternateCov = "default",
   desc_frac = 0.8,
-  max_iter = 100
+  max_iter = 100,
+  use_huge = TRUE
 )
 }
 \description{

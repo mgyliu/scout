@@ -6,7 +6,7 @@ Version: 1.0.4
 Date: 2015-07-09
 Author: Daniela M. Witten and Robert Tibshirani
 Maintainer: Daniela M. Witten <dwitten@uw.edu>
-Imports: glasso, stats, grDevices, graphics
+Imports: glasso, stats, grDevices, graphics, huge
 Suggests: 
     lars,
     testthat (>= 3.0.0)
