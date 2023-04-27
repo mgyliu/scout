@@ -14,17 +14,17 @@ compute_cv_metric <- function(yhat, ytrue, metric = "mse") {
     sq_resids <- resids^2
     # For each (lam1, lam2), compute the MSE
     return(apply(sq_resids, c(1, 2), mean))
-  } else if (metric == "tau_size") {
+  } else if (metric == "tausize") {
     return(apply(resids, c(1, 2), pense::tau_size))
   }
 
   # median absolute prediction error
-  else if (metric == "median_ape") {
+  else if (metric == "mape") {
     return(apply(resids, c(1, 2), function(r) median(abs(r))))
   }
 
   # mean absolute prediction error
-  else if (metric == "mean_ape") {
+  else if (metric == "meanape") {
     return(apply(resids, c(1, 2), function(r) mean(abs(r))))
   }
 

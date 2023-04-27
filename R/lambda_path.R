@@ -102,7 +102,7 @@ get_lambda1_max_glasso <- function(X, alternateCov = "default",
       is_off_diag_zero(hg.out$icov[[1]])
     } else {
       gg.out <- glasso::glasso(covx, rho = lambda1_max_tmp)
-      is_off_diag_zero(gg.out$w)
+      is_off_diag_zero(gg.out$wi)
     }
 
     if (cond) {
