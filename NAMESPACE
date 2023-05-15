@@ -6,7 +6,10 @@ export(
   rob_cov,
   rob_standardize,
   get_lambda1_path,
-  get_lambda2_path)
+  get_lambda2_path,
+  glasso_select,
+  huge_glasso_lambda_seq,
+  cvglasso)
 useDynLib(scout)
 S3method(print,scoutobject)
 S3method(print,cvobject)

@@ -1,12 +1,17 @@
-cov_cellwise <- function(x, y = NULL) {
+cov_cellwise <- function(x, y = NULL, wrap_y = TRUE) {
   locScale.x <- cellWise::estLocScale(x)
   # the wrapped data is stored in $Xw. covariances get computed on this.
   Xw.x <- cellWise::wrap(x, locScale.x$loc, locScale.x$scale)$Xw
   if (is.null(y)) {
     cov_cellwise <- cov(Xw.x)
   } else {
-    locScale.y <- cellWise::estLocScale(y)
-    Xw.y <- cellWise::wrap(y, locScale.y$loc, locScale.y$scale)$Xw
+    if (wrap_y) {
+      locScale.y <- cellWise::estLocScale(y)
+      Xw.y <- cellWise::wrap(y, locScale.y$loc, locScale.y$scale)$Xw
+    } else {
+      Xw.y <- y
+    }
+
     cov_cellwise <- cov(Xw.x, Xw.y)
   }
   return(cov_cellwise)
@@ -36,7 +41,7 @@ cov_mve <- function(x, y = NULL) {
   return(cov_mve)
 }
 
-rob_cov <- function(x, y = NULL, alternateCov = "default") {
+rob_cov <- function(x, y = NULL, alternateCov = "default", wrap_y = TRUE) {
   stopifnot("alternateCov must be a character type" = class(alternateCov) == "character")
 
   n <- NROW(x)
@@ -48,7 +53,7 @@ rob_cov <- function(x, y = NULL, alternateCov = "default") {
   }
 
   if (alternateCov == "cellwise") {
-    return(cov_cellwise(x, y))
+    return(cov_cellwise(x, y, wrap_y = wrap_y))
   }
 
   if (alternateCov == "mcd") {
