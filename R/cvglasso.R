@@ -1,17 +1,50 @@
-huge_glasso_lambda_seq <- function(cov_X, p, nlambda, lambda.min.ratio) {
+#' Computes the lambda sequence for huge::huge.glasso
+#' @param cov_X covariance matrix estimate
+#' @param nlambda number of lambdas to return
+#' @param lambda.min.ratio smallest value of lambda as a fraction of lambda_max
+#' @return numeric vector of length nlambda, in decreasing order, of log-spaced
+#' lambda values
+huge_glasso_lambda_seq <- function(cov_X, nlambda, lambda.min.ratio) {
+  p <- ncol(cov_X)
   lambda.max <- max(abs(cov_X - diag(p)))
   lambda.min <- lambda.min.ratio * lambda.max
   exp(seq(log(lambda.max), log(lambda.min), length = nlambda))
 }
 
+#' Uses huge::huge.glasso to estimate an inverse covariance matrix given
+#' a data matrix.
+#' @param X feature matrix, n \times p
+#' @param nlambda number of lambdas to optimize over
+#' @param lambda.min.ratio smallest value of lambda as a fraction of lambda_max
+#' @param alternateCov either "default" or "cellwise". if "default", passes
+#' cov(X) to huge.glasso. if "cellwise", passes the cellwise robust covariance
+#' estimate of X to huge.glasso.
+#' @param standardize whether or not to standardize the columns of X before
+#' performing glasso
+#' @param crit criteria to select the optimal lambda. one of "bic" or "loglik"
+#' @param scr whether to use lossy screening in huge.glasso
+#' @param verbose whether to let huge.glasso print progress messages
+#' @return list of:
+#' * `icov`: matrix - inverse covariance estimate based on best lambda,
+#' * `best_lambda`: numeric - best lambda selected based on `crit`
+#' * `lambda`: numeric vector - sequence of lambdas that was used for selection
+#' * `errors`: numeric vector - `crit` values corresponding to each value in
+#' `lambda`
 glasso_select <- function(X, nlambda = 10, lambda.min.ratio = 0.1,
-                          alternateCov = "default", crit = "bic",
+                          standardize = TRUE, alternateCov = "default",
+                          crit = "bic",
                           scr = F, verbose = F) {
   p <- ncol(X)
   n <- nrow(X)
-  std_result_x <- rob_standardize_matrix(X, alternateCov = alternateCov)
-  cov_X <- rob_cov(std_result_x$x, alternateCov = alternateCov)
-  lambda <- huge_glasso_lambda_seq(cov_X, p, nlambda, lambda.min.ratio)
+  if (standardize) {
+    std_result_x <- rob_standardize_matrix(X, alternateCov = alternateCov)
+    std_x <- std_result_x$x
+  } else {
+    std_x <- X
+  }
+
+  cov_X <- rob_cov(std_x, alternateCov = alternateCov)
+  lambda <- huge_glasso_lambda_seq(cov_X, nlambda, lambda.min.ratio)
 
   hg.out <- huge::huge.glasso(cov_X, lambda = lambda, scr = scr, verbose = verbose)
 
@@ -31,7 +64,7 @@ glasso_select <- function(X, nlambda = 10, lambda.min.ratio = 0.1,
 }
 
 # Assume X is standardized
-#' @param X unstandardized feature matrix
+#' @param X feature matrix
 #' @param cvfolds list of CV folds. each list item is a vector of indices to
 #' omit in the training data
 cvglasso <- function(X, cvfolds, nlambda = 10, lambda.min.ratio = 0.1,
@@ -41,7 +74,7 @@ cvglasso <- function(X, cvfolds, nlambda = 10, lambda.min.ratio = 0.1,
   p <- ncol(X)
   std_result_x <- rob_standardize_matrix(X, alternateCov = alternateCov)
   cov_X <- rob_cov(std_result_x$x, alternateCov = alternateCov)
-  lambda <- huge_glasso_lambda_seq(cov_X, p, nlambda, lambda.min.ratio)
+  lambda <- huge_glasso_lambda_seq(cov_X, nlambda, lambda.min.ratio)
 
   cv_errors <- foreach::foreach(i = 1:length(cvfolds), .combine = "rbind") %do% {
     omit <- cvfolds[[i]]

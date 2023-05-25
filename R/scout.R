@@ -34,7 +34,7 @@ compute_cv_metric <- function(yhat, ytrue, metric = "mse") {
 scout <- function(x, y, newx = NULL, p1 = 2, p2 = 1,
                   lam1s = seq(.001, .2, len = 10), lam2s = seq(.001, .2, len = 10),
                   rescale = TRUE, trace = TRUE, standardize = TRUE,
-                  intercept = FALSE, alternateCov = "default") {
+                  rescale_betas = TRUE, intercept = FALSE, alternateCov = "default") {
   call <- match.call()
   if (!is.null(p1) && p1 != 1 && p1 != 2) stop("p1 must be 1, 2, or NULL.")
   if (!is.null(p2) && p2 != 1) stop("p1 must be 1 or NULL.")
@@ -131,7 +131,10 @@ scout <- function(x, y, newx = NULL, p1 = 2, p2 = 1,
     }
   }
 
-  betamat <- sweep(betamat, 3, sdy / sdx, "*")
+  if (rescale_betas) {
+    betamat <- sweep(betamat, 3, sdy / sdx, "*")
+  }
+
   betamat <- array(
     betamat[rank(lam1s.orig), rank(lam2s.orig), ],
     dim = c(length(lam1s.orig), length(lam2s.orig), ncol(x))

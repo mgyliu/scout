@@ -39,3 +39,16 @@ test_that("scout1something_huge runs for multiple lam1s and lam2s", {
   expect_false(is.null(scout_res$g.out$wi))
   expect_equal(dim(scout_res$g.out$wi), c(p, p))
 })
+
+test_that("scout1something_huge does not accept any lam1s == 0", {
+  n <- 10
+  p <- 7
+  x <- matrix(rnorm(n * p), nrow = n)
+  y <- x %*% 1:p + rnorm(n)
+
+  expect_error(
+    scout1something_huge(x, y, p2 = NULL, lam1s = c(0, 0.1), lam2s = c(0.1, 0.2), trace = FALSE),
+    # "lam1s.*were\s0"
+    "lam1s.*were.*0"
+  )
+})
