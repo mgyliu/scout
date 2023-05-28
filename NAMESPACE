@@ -11,7 +11,8 @@ export(
   get_lambda2_path,
   glasso_select,
   huge_glasso_lambda_seq,
-  cvglasso)
+  cvglasso,
+  scout_glasso_stepwise)
 useDynLib(scout)
 S3method(print,scoutobject)
 S3method(print,cvobject)
