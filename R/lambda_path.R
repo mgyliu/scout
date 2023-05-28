@@ -84,7 +84,7 @@ get_lambda1_max_glasso <- function(X, alternateCov = "default",
   if (alternateCov == "default") {
     XTX <- abs(t(X) %*% X)
   } else {
-    Xw <- cellWise::wrap(X)$Xw
+    Xw <- cellWise::wrap(X, checkPars = list(silent = TRUE))$Xw
     XTX <- abs(t(Xw) %*% Xw)
   }
 
@@ -119,8 +119,8 @@ get_lambda2_max_lasso <- function(X, Y, alternateCov = "default", desc_frac = 0.
   if (alternateCov == "default") {
     XTY <- t(X) %*% Y
   } else {
-    Xw <- cellWise::wrap(X)$Xw
-    Yw <- cellWise::wrap(Y)$Xw
+    Xw <- cellWise::wrap(X, checkPars = list(silent = TRUE))$Xw
+    Yw <- cellWise::wrap(Y, checkPars = list(silent = TRUE))$Xw
     XTY <- t(Xw) %*% Yw
   }
 

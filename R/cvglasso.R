@@ -127,7 +127,7 @@ glasso_traintest <- function(X_train, X_test, lambda, alternateCov, crit,
 icov_error <- function(icov, cov, n, method = "loglik") {
   stopifnot(method %in% c("loglik", "bic"))
 
-  # negative log likelihood = - log |Theta| + tr(Theta * Sigmabrowser()
+  # negative log likelihood = - log |Theta| + tr(Theta * Sigma)
   neg_loglik <- -determinant(icov, logarithm = TRUE)$modulus[[1]] + sum(diag(icov %*% cov))
 
   if (method == "bic") {

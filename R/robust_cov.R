@@ -1,20 +1,20 @@
 cov_cellwise <- function(x, y = NULL, wrap_y = TRUE) {
   locScale.x <- cellWise::estLocScale(x)
   # the wrapped data is stored in $Xw. covariances get computed on this.
-  Xw.x <- cellWise::wrap(x, locScale.x$loc, locScale.x$scale)$Xw
+  Xw.x <- cellWise::wrap(x, locScale.x$loc, locScale.x$scale, checkPars = list(silent = TRUE))$Xw
   if (is.null(y)) {
-    cov_cellwise <- cov(Xw.x)
+    cw_cov <- cov(Xw.x)
   } else {
     if (wrap_y) {
       locScale.y <- cellWise::estLocScale(y)
-      Xw.y <- cellWise::wrap(y, locScale.y$loc, locScale.y$scale)$Xw
+      Xw.y <- cellWise::wrap(y, locScale.y$loc, locScale.y$scale, checkPars = list(silent = TRUE))$Xw
     } else {
       Xw.y <- y
     }
 
-    cov_cellwise <- cov(Xw.x, Xw.y)
+    cw_cov <- cov(Xw.x, Xw.y)
   }
-  return(cov_cellwise)
+  return(cw_cov)
 }
 
 cov_mcd <- function(x, y = NULL) {
