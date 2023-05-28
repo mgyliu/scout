@@ -5,6 +5,8 @@ export(
   cv2.scout,
   rob_cov,
   rob_standardize,
+  rob_standardize_matrix,
+  rob_standardize_vector,
   get_lambda1_path,
   get_lambda2_path,
   glasso_select,
