@@ -1,5 +1,5 @@
 
-scout1something <- function(x, y, p2, lam1s, lam2s, rescale, trace, intercept = FALSE, alternateCov = "default") {
+scout1something <- function(x, y, p2, lam1s, lam2s, rescale, trace, alternateCov = "default") {
   if (ncol(x) > 500) {
     rlog::log_warn("You are running scout with p1=1 and ncol(x) > 500. This will be slow. You may want to re-start and use p1=2, which is much faster.")
   }
@@ -67,7 +67,7 @@ scout1something <- function(x, y, p2, lam1s, lam2s, rescale, trace, intercept = 
       }
       if (rescale && sum(abs(beta)) != 0) {
         # Step 4: rescale beta_hat* = c * beta_hat
-        beta <- beta * lsfit(x %*% beta, y, intercept = intercept)$coef
+        beta <- beta * lsfit(x %*% beta, y, intercept = FALSE)$coef
         # TODO robustbase::lmrob here when outliers are in Y
       }
       betamat[i, j, ] <- beta
@@ -77,8 +77,7 @@ scout1something <- function(x, y, p2, lam1s, lam2s, rescale, trace, intercept = 
   list(betamat = betamat, g.out = g.out)
 }
 
-scout1something_huge <- function(x, y, p2, lam1s, lam2s, rescale, trace,
-                                 intercept = FALSE, alternateCov = "default") {
+scout1something_huge <- function(x, y, p2, lam1s, lam2s, rescale, trace, alternateCov = "default") {
   if (ncol(x) > 500) {
     rlog::log_warn("You are running scout with p1=1 and ncol(x) > 500. This will be slow. You may want to re-start and use p1=2, which is much faster.")
   }
@@ -140,7 +139,7 @@ scout1something_huge <- function(x, y, p2, lam1s, lam2s, rescale, trace,
       }
       if (rescale && sum(abs(beta)) != 0) {
         # Step 4: rescale beta_hat* = c * beta_hat
-        beta <- beta * lsfit(x %*% beta, y, intercept = intercept)$coef
+        beta <- beta * lsfit(x %*% beta, y, intercept = FALSE)$coef
       }
       betamat[i, j, ] <- beta
     }

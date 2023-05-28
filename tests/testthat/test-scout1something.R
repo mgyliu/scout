@@ -11,7 +11,7 @@ test_that("scout1something runs for multiple lam1s and lam2s", {
     p2 = 1,
     lam1s = lam1s, lam2s = lam2s,
     rescale = TRUE, trace = FALSE,
-    intercept = FALSE, alternateCov = "default"
+    alternateCov = "default"
   )
   expect_equal(dim(scout_res$betamat), c(nlam, nlam, p))
   expect_equal(dim(scout_res$g.out$w), c(p, p))
@@ -32,7 +32,7 @@ test_that("scout1something_huge runs for multiple lam1s and lam2s", {
     p2 = 1,
     lam1s = lam1s, lam2s = lam2s,
     rescale = TRUE, trace = FALSE,
-    intercept = FALSE, alternateCov = "default"
+    alternateCov = "default"
   )
   expect_equal(dim(scout_res$betamat), c(nlam, nlam, p))
   expect_equal(dim(scout_res$g.out$w), c(p, p))

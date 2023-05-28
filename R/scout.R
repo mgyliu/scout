@@ -34,7 +34,7 @@ compute_cv_metric <- function(yhat, ytrue, metric = "mse") {
 scout <- function(x, y, newx = NULL, p1 = 2, p2 = 1,
                   lam1s = seq(.001, .2, len = 10), lam2s = seq(.001, .2, len = 10),
                   rescale = TRUE, trace = TRUE, standardize = TRUE,
-                  rescale_betas = TRUE, intercept = FALSE, alternateCov = "default") {
+                  rescale_betas = TRUE, alternateCov = "default") {
   call <- match.call()
   if (!is.null(p1) && p1 != 1 && p1 != 2) stop("p1 must be 1, 2, or NULL.")
   if (!is.null(p2) && p2 != 1) stop("p1 must be 1 or NULL.")
@@ -92,7 +92,7 @@ scout <- function(x, y, newx = NULL, p1 = 2, p2 = 1,
       if (trace) cat(j, fill = F)
       if (lam2s[j] == 0) {
         if (ncol(x) >= nrow(x)) stop("Cannot do Least Squares when ncol(x)>=nrow(x)")
-        beta <- lsfit(x, y, intercept = intercept)$coef
+        beta <- lsfit(x, y, intercept = FALSE)$coef
         betamat[1, j, ] <- beta
       } else {
         if (j == 1) {
@@ -110,7 +110,7 @@ scout <- function(x, y, newx = NULL, p1 = 2, p2 = 1,
           }
         }
         if (rescale && sum(abs(beta)) != 0) {
-          beta <- beta * lsfit(x %*% beta, y, intercept = intercept)$coef
+          beta <- beta * lsfit(x %*% beta, y, intercept = FALSE)$coef
         }
         betamat[1, j, ] <- beta
       }
@@ -187,7 +187,7 @@ cv.scout <- function(x, y,
                      lam2s = seq(0.001, 0.2, len = 10),
                      p1 = 2, p2 = 1,
                      trace = TRUE, plot = TRUE, plotSE = FALSE,
-                     rescale = TRUE, intercept = FALSE, alternateCov = "default", ...) {
+                     rescale = TRUE, alternateCov = "default", ...) {
   call <- match.call()
   if (K == 1) stop("You can't do 1-fold cross-validation! Please use K > 1.")
   if (K > length(y) / 2) stop("Please choose a value of K between 2 and length(y)/2.")
@@ -205,7 +205,7 @@ cv.scout <- function(x, y,
     for (i in seq(K)) {
       if (trace) cat("\n CV Fold", i, "\t")
       omit <- all.folds[[i]]
-      fit <- scout(x[-omit, ], y[-omit], newx = x[omit, ], p1 = p1, p2 = p2, lam1s = lam1s, lam2s = lam2s, rescale = rescale, trace = trace, intercept = intercept, alternateCov = alternateCov)
+      fit <- scout(x[-omit, ], y[-omit], newx = x[omit, ], p1 = p1, p2 = p2, lam1s = lam1s, lam2s = lam2s, rescale = rescale, trace = trace, alternateCov = alternateCov)
       # For each (lam1, lam2), compute yhat - ytrue
       # resids is (n_lam1 x n_lam2 x n_omit)
       resids <- sweep(fit$yhat, MARGIN = 3, STATS = y[omit], FUN = "-")
@@ -244,7 +244,7 @@ cv.scout <- function(x, y,
     for (i in seq(K)) {
       if (trace) cat("\n CV Fold", i, "\t")
       omit <- all.folds[[i]]
-      fit <- scout(x[-omit, ], y[-omit], newx = x[omit, ], p1 = p1, p2 = p2, lam1s = lam1, lam2s = lam2s, rescale = rescale, trace = trace, intercept = intercept, alternateCov = alternateCov)
+      fit <- scout(x[-omit, ], y[-omit], newx = x[omit, ], p1 = p1, p2 = p2, lam1s = lam1, lam2s = lam2s, rescale = rescale, trace = trace, alternateCov = alternateCov)
       residmat[, i] <- apply(sweep(fit$yhat[1, , ], 2, y[omit], "-")^2, 1, mean)
     }
     cv <- apply(residmat, 1, mean)
@@ -267,7 +267,7 @@ cv.scout <- function(x, y,
     for (i in seq(K)) {
       if (trace) cat("\n CV Fold", i, "\t")
       omit <- all.folds[[i]]
-      fit <- scout(x[-omit, ], y[-omit], newx = x[omit, ], p1 = p1, p2 = p2, lam1s = lam1s, lam2s = lam2, trace = trace, rescale = rescale, intercept = intercept, alternateCov = alternateCov)
+      fit <- scout(x[-omit, ], y[-omit], newx = x[omit, ], p1 = p1, p2 = p2, lam1s = lam1s, lam2s = lam2, trace = trace, rescale = rescale, alternateCov = alternateCov)
       residmat[, i] <- apply(sweep(fit$yhat[, 1, ], 2, y[omit], "-")^2, 1, mean)
     }
     cv <- apply(residmat, 1, mean)
@@ -307,7 +307,6 @@ cv2.scout <- function(x, y, p1 = 2, p2 = 1,
                       lam2s = NULL,
                       trace = FALSE,
                       rescale = TRUE,
-                      intercept = FALSE,
                       alternateCov = "default",
                       cvmetric = "mse",
                       ncores = 1,
@@ -344,7 +343,7 @@ cv2.scout <- function(x, y, p1 = 2, p2 = 1,
   for (i in seq(K)) {
     if (trace) cat("\n CV Fold", i, "\t")
     omit <- all.folds[[i]]
-    fit <- scout(x[-omit, ], y[-omit], newx = x[omit, ], p1 = p1, p2 = p2, lam1s = lam1s, lam2s = lam2s, rescale = rescale, trace = trace, intercept = intercept, alternateCov = alternateCov)
+    fit <- scout(x[-omit, ], y[-omit], newx = x[omit, ], p1 = p1, p2 = p2, lam1s = lam1s, lam2s = lam2s, rescale = rescale, trace = trace, alternateCov = alternateCov)
 
     residmat[, , i] <- compute_cv_metric(fit$yhat, y[omit], cvmetric)
   }

@@ -19,6 +19,6 @@
 #     }
 #   }
 # }
-scout1something_alt <- function(x, y, xtest, ytest, p2, lam1s, lam2s, rescale, trace, intercept = FALSE, alternateCov = "default") {
+scout1something_alt <- function(x, y, xtest, ytest, p2, lam1s, lam2s, rescale, trace, alternateCov = "default") {
 
 }

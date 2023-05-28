@@ -1,5 +1,5 @@
 
-scout2something <- function(x, y, p2, lam1s, lam2s, rescale, trace, intercept = FALSE, alternateCov = "default") {
+scout2something <- function(x, y, p2, lam1s, lam2s, rescale, trace, alternateCov = "default") {
   if (sum(order(lam2s) == (1:length(lam2s))) != length(lam2s)) {
     stop("Error!!!! lam2s must be ordered!!!")
   }
@@ -43,23 +43,23 @@ scout2something <- function(x, y, p2, lam1s, lam2s, rescale, trace, intercept = 
           }
         }
         if (rescale && sum(abs(beta)) != 0) {
-          beta <- beta * lsfit(x %*% beta, y, intercept = intercept)$coef
+          beta <- beta * lsfit(x %*% beta, y, intercept = FALSE)$coef
         }
         betamat[i, j, ] <- beta
       }
     } else if (lam1s[i] == 0) {
-      if (p2 == 0) betamat[i, 1, ] <- lsfit(x, y, intercept = intercept)$coef
+      if (p2 == 0) betamat[i, 1, ] <- lsfit(x, y, intercept = FALSE)$coef
       if (p2 == 1) {
         for (j in 1:length(lam2s)) {
           if (lam2s[j] == 0) {
-            beta <- lsfit(x, y, intercept = intercept)$coef
+            beta <- lsfit(x, y, intercept = FALSE)$coef
           }
           if (lam2s[j] != 0) {
             l_one_res <- lasso_one(rob_cov(x, alternateCov = alternateCov), rob_cov(x, y, alternateCov = alternateCov), rho = lam2s[j])
             beta <- l_one_res$beta
           }
           if (sum(abs(beta)) != 0 && rescale) {
-            betamat[i, j, ] <- beta * lsfit(x %*% beta, y, intercept = intercept)$coef
+            betamat[i, j, ] <- beta * lsfit(x %*% beta, y, intercept = FALSE)$coef
           } else {
             betamat[i, j, ] <- beta
           }

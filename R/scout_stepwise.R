@@ -36,9 +36,6 @@ scout_glasso_stepwise <- function(X, Y, p2 = 1, K = 10,
     stop(glue::glue("scout_lasso_stepwise not implemented for p2 = {deparse(p2)}"))
   }
 
-  # betahat <- get_scout_coef(mod, p = ncol(X), intercept = F)
-  # yhat <- predict(mod, X_test)
-
   list(g.res = g.res, cv.res = cv.res, mod = mod)
 }
 
