@@ -27,6 +27,18 @@ scout_glasso_stepwise <- function(X, Y, p2 = 1, K = 10,
     alternateCov = alternateCov
   )
 
+  # If we're using the robust method, wrap the data before passing into scout
+  use_cellwise <- alternateCov == "cellwise"
+
+  X_wrap_res <- NA
+  Y_wrap_res <- NA
+  if (use_cellwise) {
+    X_wrap_res <- cellWise::wrap(X, checkPars = list(silent = TRUE))
+    X <- X_wrap_res$Xw
+    Y_wrap_res <- cellWise::wrap(Y, checkPars = list(silent = TRUE))
+    Y <- Y_wrap_res$Xw
+  }
+
   # Use best lambda from glasso in scout as lambda1
   if (is.null(p2)) {
     cv.res <- NA
@@ -41,7 +53,7 @@ scout_glasso_stepwise <- function(X, Y, p2 = 1, K = 10,
     )
   } else if (p2 == 1) {
     cvmetric <- "mse"
-    if (alternateCov == "cellwise") {
+    if (use_cellwise) {
       cvmetric <- "mape"
     }
 
@@ -71,7 +83,10 @@ scout_glasso_stepwise <- function(X, Y, p2 = 1, K = 10,
     stop(glue::glue("scout_lasso_stepwise not implemented for p2 = {deparse(p2)}"))
   }
 
-  list(g.res = g.res, cv.res = cv.res, mod = mod)
+  list(
+    g.res = g.res, cv.res = cv.res, mod = mod,
+    X_wrap_res = X_wrap_res, Y_wrap_res = Y_wrap_res
+  )
 }
 
 scout_gridge_stepwise <- function(X, Y, p2 = 1, K = 10, nlambda1 = 100, lambda1.min.ratio = 0.1,
