@@ -13,7 +13,7 @@
 scout_1something_stepwise <- function(X, Y, p2, K = 5,
                                       nlambda1 = 100, lambda1.min.ratio = 0.1,
                                       nlambda2 = 100, lambda2.min.ratio = 0.1,
-                                      standardize = T) {
+                                      standardize = TRUE) {
   # First use glasso to find best lambda1
   g.res <- glasso_select(
     X,

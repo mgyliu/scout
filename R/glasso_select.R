@@ -26,7 +26,8 @@ huge_glasso_lambda_seq <- function(cov_X, nlambda, lambda.min.ratio) {
 #' * `errors`: numeric vector - `crit` values corresponding to each value in
 #' `lambda`
 glasso_select <- function(X, nlambda = 100, lambda.min.ratio = 0.1,
-                          crit = "bic", standardize = T, scr = F, verbose = F) {
+                          crit = "bic", standardize = TRUE,
+                          scr = FALSE, verbose = FALSE) {
   p <- ncol(X)
   n <- nrow(X)
 
