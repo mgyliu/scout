@@ -4,18 +4,34 @@ cv.folds <- function(n, folds = 10) {
 }
 
 cv.scout <- function(x, y, K = 10,
-                     lam1s = seq(0.001, .2, len = 10),
-                     lam2s = seq(0.001, .2, len = 10),
+                     nlambda1 = 100, lambda1_min_ratio = 0.01,
+                     nlambda2 = 100, lambda2_min_ratio = 0.001,
+                     lam1s = NULL, # seq(0.001, .2, len = 10),
+                     lam2s = NULL, # seq(0.001, .2, len = 10),
                      p1 = 2, p2 = 1,
                      trace = FALSE, plot = FALSE, plotSE = FALSE, rescale = TRUE, ...) {
   call <- match.call()
   if (K == 1) stop("You can't do 1-fold cross-validation! Please use K > 1.")
   if (K > length(y) / 2) stop("Please choose a value of K between 2 and length(y)/2.")
   if (p1 == 0 && p2 == 0) stop("Why would you want to cross-validate least squares?")
-  if (is.null(p1)) lam1s <- 0
-  if (is.null(p2)) lam2s <- 0
-  lam1s <- c(lam1s)
-  lam2s <- c(lam2s)
+
+  x_std <- scale(x, TRUE, TRUE)
+  y_std <- (y - mean(y)) / sd(y)
+  if (is.null(lam1s)) {
+    lam1s <- get_lambda1_path(
+      x_std, p1,
+      nlambda = nlambda1,
+      lambda_min_ratio = lambda1_min_ratio
+    )
+  }
+  if (is.null(lam2s)) {
+    lam2s <- get_lambda2_path(
+      x_std, y_std, p2,
+      nlambda = nlambda2,
+      lambda_min_ratio = lambda2_min_ratio
+    )
+  }
+
   if (length(lam1s) < 2 && length(lam2s) < 2) stop("Not a reasonable range of lambdas over which to be cross-validating")
   all.folds <- cv.folds(length(y), K)
   if (length(lam1s) > 1 && length(lam2s) > 1) {
