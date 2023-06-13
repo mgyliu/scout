@@ -1,0 +1,95 @@
+#' Puts together glasso_select and scout1something
+#' @param X n \times p data matrix
+#' @param Y n \times 1 response vector
+#' @param p2 regularization type in second step. one of NULL or 1
+#' @param K number of folds to use in CV. only applicable for p2 = 1
+#' @param nlambda1 number of regularization params to use in glasso step
+#' @param nlambda2 number of regularization params to use in lasso step
+#' @param alternateCov one of "cellwise" or "default"
+#' @return list of
+#' * `g.res`: result of graphical lasso step
+#' * `cv.res`: result of cross-validated lasso step, or NA if p2 = NULL
+#' * `betahat`: coefficient estimate#' * `yhat`: predictions on test data
+#' * `mod`: final scout model using cross-validated parameters
+scout_glasso_stepwise <- function(X, Y, p2 = 1, K = 10,
+                                  nlambda1 = 100, lambda1.min.ratio = 0.1,
+                                  nlambda2 = 100, lambda2.min.ratio = 0.01,
+                                  alternateCov = "default",
+                                  standardize = TRUE,
+                                  rescale_betas = TRUE) {
+  # First use glasso to find best lambda1
+  g.res <- glasso_select(
+    X,
+    nlambda = nlambda1,
+    lambda.min.ratio = lambda1.min.ratio,
+    standardize = standardize,
+    crit = "bic",
+    alternateCov = alternateCov
+  )
+
+  # If we're using the robust method, wrap the data before passing into scout
+  use_cellwise <- alternateCov == "cellwise"
+
+  X_wrap_res <- NA
+  Y_wrap_res <- NA
+  if (use_cellwise) {
+    X_wrap_res <- cellWise::wrap(X, checkPars = list(silent = TRUE))
+    X <- X_wrap_res$Xw
+    Y_wrap_res <- cellWise::wrap(Y, checkPars = list(silent = TRUE))
+    Y <- Y_wrap_res$Xw
+  }
+
+  # Use best lambda from glasso in scout as lambda1
+  if (is.null(p2)) {
+    cv.res <- NA
+    mod <- scout(
+      X, Y,
+      p1 = 1, p2 = p2,
+      lam1s = g.res$best_lambda,
+      alternateCov = alternateCov,
+      trace = FALSE,
+      standardize = standardize,
+      rescale_betas = rescale_betas
+    )
+  } else if (p2 == 1) {
+    cvmetric <- "mse"
+    if (use_cellwise) {
+      cvmetric <- "mape"
+    }
+
+    cv.res <- cv2.scout(
+      X, Y,
+      p1 = 1, p2 = p2,
+      lam1s = c(g.res$best_lambda),
+      nlambda2 = nlambda2,
+      lambda2_min_ratio = lambda2.min.ratio,
+      K = K,
+      cvmetric = cvmetric,
+      alternateCov = alternateCov,
+      standardize = standardize,
+      rescale_betas = rescale_betas
+    )
+    mod <- scout(
+      X, Y,
+      p1 = 1, p2 = p2,
+      lam1s = g.res$best_lambda,
+      lam2s = cv.res$bestlam2,
+      alternateCov = alternateCov,
+      standardize = standardize,
+      rescale_betas = rescale_betas,
+      trace = FALSE
+    )
+  } else {
+    stop(glue::glue("scout_lasso_stepwise not implemented for p2 = {deparse(p2)}"))
+  }
+
+  list(
+    g.res = g.res, cv.res = cv.res, mod = mod,
+    X_wrap_res = X_wrap_res, Y_wrap_res = Y_wrap_res
+  )
+}
+
+scout_gridge_stepwise <- function(X, Y, p2 = 1, K = 10, nlambda1 = 100, lambda1.min.ratio = 0.1,
+                                  nlambda2 = 100, lambda2.min.ratio = 0.01,
+                                  alternateCov = "default") {
+}

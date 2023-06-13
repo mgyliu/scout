@@ -1,4 +1,18 @@
-export(scout,cv.scout,crossProdLasso)
+export(
+  crossProdLasso,
+  scout,
+  cv.scout,
+  cv2.scout,
+  rob_cov,
+  rob_standardize,
+  rob_standardize_matrix,
+  rob_standardize_vector,
+  get_lambda1_path,
+  get_lambda2_path,
+  glasso_select,
+  huge_glasso_lambda_seq,
+  cvglasso,
+  scout_glasso_stepwise)
 useDynLib(scout)
 S3method(print,scoutobject)
 S3method(print,cvobject)
