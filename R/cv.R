@@ -3,8 +3,11 @@ cv.folds <- function(n, folds = 10) {
   split(sample(1:n), rep(1:folds, length = n))
 }
 
-cv.scout <- function(x, y, K = 10, lam1s = seq(0.001, .2, len = 10), lam2s = seq(0.001, .2, len = 10), p1 = 2, p2 = 1,
-                     trace = TRUE, plot = TRUE, plotSE = FALSE, rescale = TRUE, ...) {
+cv.scout <- function(x, y, K = 10,
+                     lam1s = seq(0.001, .2, len = 10),
+                     lam2s = seq(0.001, .2, len = 10),
+                     p1 = 2, p2 = 1,
+                     trace = FALSE, plot = FALSE, plotSE = FALSE, rescale = TRUE, ...) {
   call <- match.call()
   if (K == 1) stop("You can't do 1-fold cross-validation! Please use K > 1.")
   if (K > length(y) / 2) stop("Please choose a value of K between 2 and length(y)/2.")

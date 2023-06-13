@@ -1,4 +1,7 @@
-scout <- function(x, y, newx = NULL, p1 = 2, p2 = 1, lam1s = seq(.001, .2, len = 10), lam2s = seq(.001, .2, len = 10), rescale = TRUE, trace = TRUE, standardize = TRUE) {
+scout <- function(x, y, newx = NULL, p1 = 2, p2 = 1,
+                  lam1s = seq(.001, .2, len = 10),
+                  lam2s = seq(.001, .2, len = 10),
+                  rescale = TRUE, trace = FALSE, standardize = TRUE) {
   call <- match.call()
   if (!is.null(p1) && p1 != 1 && p1 != 2) stop("p1 must be 1, 2, or NULL.")
   if (!is.null(p2) && p2 != 1) stop("p1 must be 1 or NULL.")
