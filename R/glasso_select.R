@@ -1,9 +1,12 @@
+#' `huge_glasso_lambda_seq`
+#' @description
 #' Computes the lambda sequence for huge::huge.glasso
 #' @param cov_X covariance matrix estimate
 #' @param nlambda number of lambdas to return
 #' @param lambda.min.ratio smallest value of lambda as a fraction of lambda_max
 #' @return numeric vector of length nlambda, in decreasing order, of log-spaced
 #' lambda values
+#' @export
 huge_glasso_lambda_seq <- function(cov_X, nlambda, lambda.min.ratio) {
   p <- ncol(cov_X)
   lambda.max <- max(abs(cov_X - diag(p)))
@@ -11,46 +14,44 @@ huge_glasso_lambda_seq <- function(cov_X, nlambda, lambda.min.ratio) {
   exp(seq(log(lambda.max), log(lambda.min), length = nlambda))
 }
 
+#' `glasso_select`
+#' @description
 #' Uses huge::huge.glasso to estimate an inverse covariance matrix given
 #' a data matrix.
-#' @param X feature matrix, n \times p
+#' @param X feature matrix, \eqn{n \times p}
 #' @param nlambda number of lambdas to optimize over
 #' @param lambda.min.ratio smallest value of lambda as a fraction of lambda_max
 #' @param crit criteria to select the optimal lambda. one of "bic" or "loglik"
 #' @param scr whether to use lossy screening in huge.glasso
 #' @param verbose whether to let huge.glasso print progress messages
 #' @return list of:
-#' * `icov`: matrix - inverse covariance estimate based on best lambda,
+#' * `icov`: matrix - inverse covariance estimate based on best lambda
 #' * `best_lambda`: numeric - best lambda selected based on `crit`
 #' * `lambda`: numeric vector - sequence of lambdas that was used for selection
 #' * `errors`: numeric vector - `crit` values corresponding to each value in
 #' `lambda`
+#' @export
 glasso_select <- function(X, nlambda = 100, lambda.min.ratio = 0.1,
                           crit = "bic", standardize = TRUE,
                           scr = FALSE, verbose = FALSE) {
-  p <- ncol(X)
-  n <- nrow(X)
-
   # Need to center and scale X
-  meanx <- apply(X, 2, mean)
   if (standardize) {
     sdx <- apply(X, 2, sd)
     X <- scale(X, T, T)
   } else {
-    X <- scale(X, T, F)
     sdx <- rep(1, ncol(X))
+    X <- scale(X, T, F)
   }
 
   cov_X <- cov(X)
-  lambda <- huge_glasso_lambda_seq(cov_X, nlambda, lambda.min.ratio)
-
-  hg.out <- huge::huge.glasso(cov_X, lambda = lambda, scr = scr, verbose = verbose)
-
+  # Pass in nlambda and lambda.min.ratio; let huge compute its own lambda sequence.
+  hg.out <- huge::huge.glasso(cov_X, nlambda = nlambda, scr = scr, verbose = verbose)
   # Compute error criteria for each lambda
   errors <- unlist(lapply(hg.out$icov, function(icov) {
-    icov_error(icov, cov_X, n, method = crit)
+    icov_error(icov, cov_X, nrow(X), method = crit)
   }))
 
+  lambda <- hg.out$lambda
   best_idx <- which.min(errors)
   best_lambda <- lambda[best_idx]
   icovx <- hg.out$icov[[best_idx]]
@@ -61,10 +62,12 @@ glasso_select <- function(X, nlambda = 100, lambda.min.ratio = 0.1,
   )
 }
 
+#' Error of inverse covariance matrix estimate
 #' @param icov inverse covariance estimate
 #' @param cov covariance estimate
 #' @param n number of rows in original data matrix
 #' @param method one of "loglik", "bic"
+#' @export
 icov_error <- function(icov, cov, n, method = "loglik") {
   stopifnot(method %in% c("loglik", "bic"))
 

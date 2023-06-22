@@ -18,7 +18,11 @@ scout2something <- function(x, y, p2, lam1s, lam2s, rescale, trace) {
           if (j == 1) beta <- lasso_one(diag(rep(g.out$wstuff$firstdiag, ncol(x))) + g.out$wstuff$v %*% diag(g.out$wstuff$diagsandwich) %*% t(g.out$wstuff$v), cov(x, y), rho = lam2s[j])$beta
           if (j != 1) {
             if (sum(abs(beta)) != 0 || lam2s[j] < lam2s[j - 1]) {
-              beta <- lasso_one(diag(rep(g.out$wstuff$firstdiag, ncol(x))) + g.out$wstuff$v %*% diag(g.out$wstuff$diagsandwich) %*% t(g.out$wstuff$v), cov(x, y), rho = lam2s[j], beta.init = beta)$beta
+              beta <- lasso_one(
+                diag(rep(g.out$wstuff$firstdiag, ncol(x))) + g.out$wstuff$v %*% diag(g.out$wstuff$diagsandwich) %*% t(g.out$wstuff$v),
+                cov(x, y),
+                rho = lam2s[j], beta.init = beta
+              )$beta
               # If you got zero for a smaller value of
               # lambda2, then no need to keep computing!!!!!!!
             }

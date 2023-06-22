@@ -1,8 +1,53 @@
-
 cv.folds <- function(n, folds = 10) {
   split(sample(1:n), rep(1:folds, length = n))
 }
 
+#' cv.scout
+#' @title
+#' Perform cross-validation for covariance-regularized regression, aka the Scout.
+#' @description
+#' This function returns cross-validation error rates for a range
+#' of lambda1 and lambda2 values, and also makes beautiful CV plots if
+#' plot=TRUE.
+#' @param x A matrix of predictors, where the rows are the samples and
+#' the columns are the predictors
+#' @param y A matrix of observations, where length(y) should equal nrow(x)
+#' @param KNumber of cross-validation folds to be performed; default is 10
+#' @param lam1s The (vector of) tuning parameters for regularization of the
+#' covariance matrix. Can be NULL if p1=NULL, since then no covariance
+#' regularization is taking place. If p1=1 and nrow(x)<ncol(x), then the no value in lam1s
+#' should be smaller than 1e-3, because this will cause graphical lasso
+#' to take too long. Also, if ncol(x)>500 then we really do not
+#' recommend using p1=1, as graphical lasso can be uncomfortably slow.
+#' @param lam2s The (vector of) tuning parameters for the $L_1$ regularization of
+#' the regression coefficients, using the regularized covariacne
+#' matrix. Can be NULL if p2=NULL. (If p2=NULL, then non-zero lam2s
+#' have no effect). A value of 0 will result in no
+#' regularization.
+#' @param p1 The $L_p$ penalty for the covariance regularization. Must be
+#' one of 1, 2, or NULL. NULL corresponds to no covariance
+#' regularization.
+#' @param p2 The $L_p$ penalty for the estimation of the regression
+#' coefficients based on the regularized covariance matrix. Must be one
+#' of 1 (for $L_1$ regularization) or NULL (for no regularization).
+#' @param trace Print out progress as we go? Default is TRUE.
+#' @param plot If TRUE (by default), makes beautiful CV plots.
+#' @param plotSE Should those beautiful CV plots also display std error
+#'     bars for the CV? Default is FALSE
+#' @param rescale Scout rescales coefficients, by default, in order to
+#'     avoid over-shrinkage
+#' @param ... Additional parameters
+#' @return
+#' - `folds`: The indices of the members of the K test sets are
+#'   returned.
+#' - `cv`: A matrix of average cross-validation errors is returned.
+#' - `cv.error`: A matrix containing the standard errors of the
+#'   elements in "cv", the matrix of average cross-validation errors.
+#' - `bestlam1`: Best value of lam1 found via cross-validation.
+#' - `bestlam2`: Best value fo lam2 found via cross-validation.
+#' - `lam1s`: Values of lam1 considered.
+#' - `lam2s`: Values of lam2 considered.
+#' @export
 cv.scout <- function(x, y, K = 10,
                      nlambda1 = 100, lambda1_min_ratio = 0.01,
                      nlambda2 = 100, lambda2_min_ratio = 0.001,

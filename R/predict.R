@@ -1,3 +1,22 @@
+#' predict.scoutobject
+#' @description
+#' A function to perform prediction, using an x matrix and the output of
+#' the "scout" function.
+#' @param object The results of a call to the "scout" function. The
+#' coefficients that are part of this object will be used for
+#' making predictions
+#' @param newx The new x at which predictions should be made. Can be a
+#' vector of length ncol(x), where x is the data on which scout.obj was
+#' created, or a matrix with ncol(x) columns
+#' @return
+#' `yhat`: If newx was a vector, then a  matrix will be returned,
+#' with dimension length(lam1s)xlength(lam2s) (where lam1s and lam2s
+#' are attributes of scout.obj). The (i,j) element of this matrix will
+#' correspond to tuning parameter values (lam1s[i], lam2s[j]). If newx
+#' is a matrix, then an array of dimension
+#' nrow(newx) x length(lam1s) x length(lam2s) will be returned.
+#' @param ... Additional arguments to predict
+#' @export
 predict.scoutobject <- function(object, newx, ...) {
   if (class(object) != "scoutobject") stop("Object must be of class 'scoutobject', created by a call to 'scout' function.")
   scout.obj <- object

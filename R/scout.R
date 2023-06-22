@@ -1,3 +1,63 @@
+#' Covariance-regularized regression, aka the Scout.
+#' @description
+#' The main function of the "scout" package. Performs
+#' covariance-regularized regression. Required inputs are an x matrix of
+#' features (the columns are the features) and a y vector of
+#' observations. By default, Scout(2,1) is performed; however, $p_1$ and
+#' $p_2$ can be specified (in which case Scout($p_1$, $p_2$) is
+#' performed). Also, by default Scout is performed over a grid of lambda1
+#' and lambda2 values, but a different grid of values (or individual
+#' values, rather than an entire grid) can be specified.
+#' @param x A matrix of predictors, where the rows are the samples and
+#' the columns are the predictors
+#' @param y A matrix of observations, where length(y) should equal nrow(x)
+#' @param newx An *optional* argument, consisting of a matrix with
+#' ncol(x) columns, at which one wishes to make predictions for each
+#' (lam1,lam2) pair.
+#' @param p1 The $L_p$ penalty for the covariance regularization. Must be
+#' one of 1, 2, or NULL. NULL corresponds to no covariance
+#' regularization.  WARNING: When p1=1, and ncol(x)>500, Scout can be
+#' SLOW. We recommend that for very large data sets, you use Scout with
+#' p1=2. Also, when ncol(x)>nrow(x) and p1=1, then very small values of
+#' lambda1 (lambda1 < 1e-4) will cause problems with graphical lasso,
+#' and so those values will be automatically increased to 1e-4.
+#' @param p2 The $L_p$ penalty for the estimation of the regression
+#' coefficients based on the regularized covariance matrix. Must be one
+#' of 1 (for $L_1$ regularization) or NULL (for no regularization).
+#' @param lam1s The (vector of) tuning parameters for regularization of the
+#' covariance matrix. Can be NULL if p1=NULL, since then no covariance
+#' regularization is taking place. If p1=1 and nrow(x)<ncol(x), then the no value in lam1s
+#' should be smaller than 1e-3, because this will cause graphical lasso
+#' to take too long. Also, if ncol(x)>500 then we really do not
+#' recommend using p1=1, as graphical lasso can be uncomfortably slow.
+#' @param lam2s The (vector of) tuning parameters for the $L_1$ regularization of
+#' the regression coefficients, using the regularized covariance
+#' matrix. Can be NULL if p2=NULL. (If p2=NULL, then non-zero lam2s
+#' have no effect). A value of 0 will result in no
+#' regularization.
+#' @param rescale Should coefficients beta obtained by
+#' covariance-regularized regression be re-scaled by a constant, given
+#' by regressing $y$ onto $x beta$? This is done in Witten and
+#' Tibshirani (2008) and is important for good performance. Default is
+#' TRUE.
+#' @param trace Print out progress? Prints out each time a lambda1 is
+#' completed. This is a good idea, especially when
+#' ncol(x) is large.
+#' @param standardize Should the columns of x be scaled to have standard deviation
+#' 1, and should y be scaled to have standard deviation 1, before
+#' covariance-regularized regression is performed? This affects the
+#' meaning of the penalties that are applied. In general,
+#' standardization should be performed. Default is TRUE.
+#' @return
+#' * intercepts - Returns a matrix of intercepts, of dimension
+#'                length(lam1s) x length(lam2s)
+#' * coefficients - Returns an array of coefficients, of dimension
+#'                  length(lam1s) x length(lam2s) x ncol(x)
+#' * p1 - p1 value used
+#' * p2 - p2 value used
+#' * lam1s - lam1s used
+#' * lam2s - lam2s used
+#' @export
 scout <- function(x, y, newx = NULL, p1 = 2, p2 = 1,
                   lam1s = seq(.001, .2, len = 10),
                   lam2s = seq(.001, .2, len = 10),
@@ -96,6 +156,22 @@ scout <- function(x, y, newx = NULL, p1 = 2, p2 = 1,
   return(scout.obj)
 }
 
+#' predict.scoutobject
+#' @title
+#' Prediction function for covariance-regularized regression, aka the Scout.
+#'
+#' @description
+#' A function to perform prediction, using an x matrix and the output of
+#' the "scout" function.
+#'
+#' @param objet The results of a call to the "scout" function. The
+#' coefficients that are part of this object will be used for
+#' making predictions.
+#' @param newx The new x at which predictions should be made. Can be a
+#' vector of length ncol(x), where x is the data on which scout.obj was
+#' created, or a matrix with ncol(x) columns.
+#' @param ... Additional arguments to predict
+#' @export
 print.scoutobject <- function(x, ...) {
   if (class(x) != "scoutobject") stop("Class of x must be 'scoutobject', created by call to function 'scout'.")
   scout.obj <- x

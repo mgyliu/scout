@@ -1,0 +1,88 @@
+\name{scout}
+\alias{scout}
+%- Also NEED an '\alias' for EACH other topic documented here.
+\title{Covariance-regularized regression, aka the Scout.}
+\description{
+The main function of the "scout" package. Performs
+covariance-regularized regression. Required inputs are an x matrix of
+features (the columns are the features) and a y vector of
+observations. By default, Scout(2,1) is performed; however, $p_1$ and
+$p_2$ can be specified (in which case Scout($p_1$, $p_2$) is
+performed). Also, by default Scout is performed over a grid of lambda1
+and lambda2 values, but a different grid of values (or individual
+values, rather than an entire grid) can be specified.
+}
+\usage{
+scout(x,y,newx,p1=2,p2=1,lam1s=seq(.001,.2,len=10),lam2s=seq(.001,.2,len=10),
+   rescale=TRUE, trace=TRUE,standardize=TRUE)
+}
+%- maybe also 'usage' for other objects documented here.
+\arguments{
+  \item{x}{A matrix of predictors, where the rows are the samples and
+    the columns are the predictors}
+  \item{y}{A matrix of observations, where length(y) should equal
+    nrow(x)}
+  \item{newx}{An *optional* argument, consisting of a matrix with
+    ncol(x) columns, at which one wishes to make predictions for each
+    (lam1,lam2) pair.}
+  \item{p1}{The $L_p$ penalty for the covariance regularization. Must be
+  one of 1, 2, or NULL. NULL corresponds to no covariance
+  regularization.  WARNING: When p1=1, and ncol(x)>500, Scout can be
+  SLOW. We recommend that for very large data sets, you use Scout with
+  p1=2. Also, when ncol(x)>nrow(x) and p1=1, then very small values of
+  lambda1 (lambda1 < 1e-4) will cause problems with graphical lasso,
+and so those values will be automatically increased to 1e-4. }
+  \item{p2}{The $L_p$ penalty for the estimation of the regression
+    coefficients based on the regularized covariance matrix. Must be one
+  of 1 (for $L_1$ regularization) or NULL (for no regularization).}
+  \item{lam1s}{The (vector of) tuning parameters for regularization of the
+    covariance matrix. Can be NULL if p1=NULL, since then no covariance
+    regularization is taking place. If p1=1 and nrow(x)<ncol(x), then the no value in lam1s
+    should be smaller than 1e-3, because this will cause graphical lasso
+    to take too long. Also, if ncol(x)>500 then we really do not
+    recommend using p1=1, as graphical lasso can be uncomfortably slow.}
+  \item{lam2s}{The (vector of) tuning parameters for the $L_1$ regularization of
+    the regression coefficients, using the regularized covariance
+    matrix. Can be NULL if p2=NULL. (If p2=NULL, then non-zero lam2s
+    have no effect). A value of 0 will result in no
+    regularization. }
+  \item{rescale}{Should coefficients beta obtained by
+    covariance-regularized regression be re-scaled by a constant, given
+    by regressing $y$ onto $x beta$? This is done in Witten and
+    Tibshirani (2008) and is important for good performance. Default is
+    TRUE.}
+  \item{trace}{Print out progress? Prints out each time a lambda1 is
+    completed. This is a good idea, especially when
+    ncol(x) is large.}
+  \item{standardize}{Should the columns of x be scaled to have standard deviation
+    1, and should y be scaled to have standard deviation 1, before
+    covariance-regularized regression is performed? This affects the
+    meaning of the penalties that are applied. In general,
+    standardization should be performed. Default is TRUE.}
+}
+\value{
+  \item{intercepts}{Returns a matrix of intercepts, of dimension length(lam1s)xlength(lam2s)}
+  \item{coefficients}{Returns an array of coefficients, of dimension
+    length(lam1s)xlength(lam2s)xncol(x).}
+  \item{p1}{p1 value used}
+  \item{p2}{p2 value used}
+  \item{lam1s}{lam1s used}
+  \item{lam2s}{lam2s used}
+}
+\references{Witten, DM and Tibshirani, R (2008) Covariance-regularized
+  regression and classification for high-dimensional problems. Journal
+  of the Royal Statistical Society, Series B 71(3): 615-636. <http://www-stat.stanford.edu/~dwitten>}
+\author{Daniela M. Witten and Robert Tibshirani}
+\note{
+  When p1=1 and ncol(x)>500 or so, then Scout can be very slow!!
+  Please use p1=2 when ncol(x) is large.
+}
+\seealso{\link{predict.scoutobject}, \link{cv.scout}}
+\examples{
+library(lars)
+data(diabetes)
+attach(diabetes)
+scout.out <- scout(x2,y,p1=2,p2=1)
+print(scout.out)
+detach(diabetes)
+}

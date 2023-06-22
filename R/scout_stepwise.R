@@ -1,3 +1,9 @@
+#' Scout(1,.) Stepwise
+#'
+#' @description
+#' Computes the best inverse covariance estimate using the glasso and uses that
+#' in the second step of the Scout.
+#'
 #' @param X n x p data matrix
 #' @param Y n x 1 response vector
 #' @param p2 regularization type in second step. one of NULL or 1
@@ -10,6 +16,7 @@
 #' * `g.res`: result of graphical lasso step
 #' * `cv.res`: result of cross-validated lasso step, or NA if p2 = NULL
 #' * `mod`: final scout model using cross-validated parameters
+#' @export
 scout_1something_stepwise <- function(X, Y, p2, K = 5,
                                       nlambda1 = 100, lambda1.min.ratio = 0.1,
                                       nlambda2 = 100, lambda2.min.ratio = 0.1,
