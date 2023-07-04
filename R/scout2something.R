@@ -15,7 +15,13 @@ scout2something <- function(x, y, p2, lam1s, lam2s, rescale, trace) {
         if (p2 == 0) {
           beta <- diag(rep(g.out$wistuff$firstdiag, ncol(x))) %*% cov(x, y) + g.out$wistuff$v %*% (diag(g.out$wistuff$diagsandwich) %*% ((t(g.out$wistuff$v)) %*% cov(x, y)))
         } else if (p2 != 0 && p2 == 1) {
-          if (j == 1) beta <- lasso_one(diag(rep(g.out$wstuff$firstdiag, ncol(x))) + g.out$wstuff$v %*% diag(g.out$wstuff$diagsandwich) %*% t(g.out$wstuff$v), cov(x, y), rho = lam2s[j])$beta
+          if (j == 1) {
+            beta <- lasso_one(
+              diag(rep(g.out$wstuff$firstdiag, ncol(x))) + g.out$wstuff$v %*% diag(g.out$wstuff$diagsandwich) %*% t(g.out$wstuff$v),
+              cov(x, y),
+              rho = lam2s[j]
+            )$beta
+          }
           if (j != 1) {
             if (sum(abs(beta)) != 0 || lam2s[j] < lam2s[j - 1]) {
               beta <- lasso_one(
@@ -46,5 +52,24 @@ scout2something <- function(x, y, p2, lam1s, lam2s, rescale, trace) {
       }
     }
   }
+  return(betamat)
+}
+
+
+scout2something_new <- function(x, y, p2, lam1s, lam2s, rescale, trace) {
+  betamat <- array(NA, dim = c(length(lam1s), length(lam2s), ncol(x)))
+
+  gr.out <- gridge2(x, rho = lam1s)
+  ws <- gr.out$ws
+
+  betamat <- sapply(lam2s, function(lam2) {
+    sapply(ws, function(w) {
+      if (p2 == 1) {
+        lasso_one(w, cov(x, y), rho = lam2)$beta
+      }
+    }, simplify = "array")
+  }, simplify = "array") |>
+    aperm(c(2, 3, 1))
+
   return(betamat)
 }

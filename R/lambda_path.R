@@ -15,13 +15,15 @@
 #' @param max_iter maximum number of iterations to use to find the lowest
 #' lambda_max in bisection search
 get_lambda1_path <- function(X, p1,
-                             nlambda = 100, lambda_min_ratio = 0.001,
+                             nlambda = 100, lambda_min_ratio = 0.1,
                              desc_frac = 0.8, max_iter = 100) {
   if (is.null(p1)) {
     return(0)
-  } else if (p1 == 1) {
-    lambda_max <- get_lambda1_max_glasso(X, desc_frac, max_iter)
-    return(get_lambda_path(lambda_max, nlambda, lambda_min_ratio))
+  } else if (p1 == 0) {
+    return(0)
+  } else if (p1 == 1 | p1 == 2) {
+    # TODO: figure out lambda sequence for p1 == 2
+    return(huge_glasso_lambda_seq(cov(X), nlambda = nlambda, lambda.min.ratio = lambda_min_ratio))
   } else {
     warning(paste0("get_lambda1_path not implemented for p1 == ", p1, ". Returning default sequence which may not work the best."))
     return(seq(0.01, 0.2, len = nlambda))
@@ -50,13 +52,13 @@ get_lambda1_path <- function(X, p1,
 #' bisection search for the "ideal" lambda_max
 #' @param max_iter maximum number of iterations to use to find the lowest
 #' lambda_max in bisection search
-get_lambda2_path <- function(X, Y, p2,
+get_lambda2_path <- function(X, Y, X_cov, p2,
                              nlambda = 100, lambda_min_ratio = 0.001,
                              desc_frac = 0.8, max_iter = 100) {
   if (is.null(p2)) {
     return(0)
   } else if (p2 == 1) {
-    lambda_max <- get_lambda2_max_lasso(X, Y)
+    lambda_max <- get_lambda2_max_lasso(X, Y, X_cov)
     return(get_lambda_path(lambda_max, nlambda, lambda_min_ratio))
   } else {
     warning(paste0("get_lambda2_path not implemented for p2 == ", p2, ". Returning default sequence which may not work the best."))
@@ -103,14 +105,21 @@ get_lambda1_max_glasso <- function(X,
   lambda1_max
 }
 
-get_lambda2_max_lasso <- function(X, Y, desc_frac = 0.8, max_iter = 100) {
+#' @param X feature matrix (n x p)
+#' @param Y response vector (n x 1)
+#' @param cov_X covariance of X data. if using with lasso_one, pass in the
+#' covariance that comes back from lasso_one. otherwise can pass in cov(X)
+#' @param desc_frac default = 0.8. fraction of previous lambda_max to multiply
+#' when descending to find smallest lambda_max
+#' @param max_iter default = 100. maximum number of iterations
+get_lambda2_max_lasso <- function(X, Y, X_cov, desc_frac = 0.8, max_iter = 100) {
   lambda2_max_tmp <- max(abs(t(X) %*% Y) * 2)
   lambda2_max <- lambda2_max_tmp
   iter <- 0
   cond <- TRUE
   while (cond & iter < max_iter) {
     l_one_res <- lasso_one(
-      cov(X),
+      X_cov,
       cov(X, Y),
       rho = lambda2_max_tmp
     )

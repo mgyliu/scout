@@ -138,6 +138,7 @@ scout <- function(x, y, newx = NULL, p1 = 2, p2 = 1,
   } else if (p1 == 2) {
     betamat <- scout2something(x, y, p2, lam1s, lam2s, rescale, trace)
   }
+
   interceptmat <- matrix(meany, nrow = length(lam1s), ncol = length(lam2s))
   for (i in 1:length(lam1s)) {
     for (j in 1:length(lam2s)) {

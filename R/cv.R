@@ -71,7 +71,7 @@ cv.scout <- function(x, y, K = 10,
   }
   if (is.null(lam2s)) {
     lam2s <- get_lambda2_path(
-      x_std, y_std, p2,
+      x_std, y_std, cov(x_std), p2,
       nlambda = nlambda2,
       lambda_min_ratio = lambda2_min_ratio
     )
