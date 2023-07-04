@@ -8,6 +8,7 @@ be standardized already}
 get_lambda2_path(
   X,
   Y,
+  X_cov,
   p2,
   nlambda = 100,
   lambda_min_ratio = 0.001,

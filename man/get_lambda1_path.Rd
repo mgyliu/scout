@@ -9,7 +9,7 @@ get_lambda1_path(
   X,
   p1,
   nlambda = 100,
-  lambda_min_ratio = 0.001,
+  lambda_min_ratio = 0.1,
   desc_frac = 0.8,
   max_iter = 100
 )

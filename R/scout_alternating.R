@@ -19,6 +19,9 @@ get_xtxs <- function(X, p1, lam1s) {
   }
 }
 
+#' betas_to_original_scale
+#' @description rescales betas to original scale of training data using the
+#' standard deviation estimates of the X and Y training data.
 #' @param betamat a matrix where each column is a beta_hat estimate for some
 #' regularization parameter
 #' @param sdx a numeric vector. column SDs of original training X data
@@ -28,6 +31,9 @@ betas_to_original_scale <- function(betamat, sdx, sdy) {
   sweep(betamat, 1, sdy / sdx, "*")
 }
 
+#' compute_intercepts
+#' @description computes the intercept term for each beta_hat estimate.
+#' The beta matrix should be such that each column contains a different beta_hat
 #' @param betamat a matrix where each column is a beta_hat estimate for some
 #' regularization parameter
 #' @param meanx a numeric vector. column means of original training X data
@@ -40,6 +46,10 @@ compute_intercepts <- function(betamat, meanx, sdx, meany, sdy) {
   })
 }
 
+#' compute_rmspe_betamat
+#' @description computes the rmspe between the provided Y_test and the predicted
+#' X_test %*% beta_hat for each beta_hat in the provided beta matrix.
+#' The beta matrix should be such that each column contains a different beta_hat
 #' @param X_test n_test x p data matrix (test data, unstandardized)
 #' @param Y_test n_test x 1 response vector (test data, unstandardized)
 #' @param intercepts numeric vector of length nlambda
@@ -150,26 +160,45 @@ get_best_lam1 <- function(X_train, Y_train, X_test, Y_test,
 #' @description implements an alternating search algorithm to efficiently
 #' search over a grid of lambda1 x lambda2. L_p penalty for coefficient
 #' regularization is assumed to be 1 (i.e., p2 = 1)
-#' @param X A matrix of predictors. Rows are observations. Cols are variables
-#' @param Y A matrix of outcomes
+#' @param X_train A matrix of predictors. Rows are observations and columns
+#' are variables
+#' @param Y_train A vector of outcomes
+#' @param X_test A matrix of predictors (test set)
+#' @param Y_test A vector of outcomes (test set)
 #' @param p1 L_p penalty for covariance regularization. must be 1 or 2
-#' @param lam1s vector of tuning parameters for regularization over the
-#' covariance matrix of X.
-#' @param lam2s vector of tuning parameters for regularization of regression
-#' coefficients.
+#' @param nlambda1 number of regularization terms to use in covariance
+#' regularization step
+#' @param nlambda2 number of regularization terms to use in coefficient
+#' regularization step
+#' @param lambda1_min_ratio smallest fraction of lambda1_max to include in
+#' lambda1 sequence
+#' @param lambda2_min_ratio smallest fraction of lambda2_max to include in
+#' lambda2 sequence
 #' @param tol convergence tolerance for difference between previous estimated
 #' rmspe and current estimated rmspe. if the difference becomes smaller than
 #' this value, the algorithm stops and returns the current lam1 and lam2
 #' combination
+#' @param max_iter maximum number of alternating iterations to compute before
+#' stopping. the loop will stop when either the number of iterations exceeds
+#' max_iter, or when the errors converge to have a diff below the tolerance
 #' @param rescale Should coefficients beta obtained by
 #' covariance-regularized regression be re-scaled by a constant, given
 #' by regressing $y$ onto $x beta$? This is done in Witten and
 #' Tibshirani (2008) and is important for good performance. Default is
 #' TRUE.
+#' @param standardize whether or not to scale the training X and Y data
+#' before performing estimation
 #' @param lam1_init one of "random" or "max"
-#' @return array of dim length(lam1s) x length(lam2s) x ncol(X) containing
-#' beta_hat estimates for each pair of lam1 and lam2. 3rd dimension is NA if
-#' that pair was skipped.
+#' @return list with items:
+#' * errors: vector of numeric RMSPE values
+#' * betas: list of vectors of estimated beta_hats
+#' * intercepts: vector of numeric intercept values
+#' * lambda_pairs: list of vectors of length 2, each vector is (lam1, lam2)
+#' * lambda2_paths: list of vectors of lambda2 paths. user usually doesn't need
+#' this but it's provided as a convenience
+#' Incides of each list or vector (other than lambda2_paths) correspond to
+#' the lambda pair at that index in lambda_pairs
+#' @export
 scout_alternating_lasso <- function(X_train, Y_train, X_test, Y_test, p1,
                                     nlambda1 = 100, nlambda2 = 100,
                                     lambda1_min_ratio = 0.1, lambda2_min_ratio = 0.001,

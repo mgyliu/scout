@@ -105,6 +105,10 @@ get_lambda1_max_glasso <- function(X,
   lambda1_max
 }
 
+#' get_lambda2_max_lasso
+#' @description computes the lambda2 max in the scout procedure for a fixed
+#' covariance estiamte. the lambda2 max is the smallest value of lambda that
+#' shrinks all coefficients to zero.
 #' @param X feature matrix (n x p)
 #' @param Y response vector (n x 1)
 #' @param cov_X covariance of X data. if using with lasso_one, pass in the
@@ -130,7 +134,6 @@ get_lambda2_max_lasso <- function(X, Y, X_cov, desc_frac = 0.8, max_iter = 100) 
     }
     iter <- iter + 1
   }
-  # rlog::log_info(paste0("In get_lambda2_max_glasso: Number of iterations: ", iter, ". max_iter was ", max_iter))
   lambda2_max
 }
 
