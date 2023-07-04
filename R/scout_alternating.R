@@ -306,6 +306,7 @@ scout_alternating_lasso <- function(X_train, Y_train, X_test, Y_test, p1,
     betas = betas,
     intercepts = intercepts,
     lambda_pairs = lambda_pairs,
-    lam2_paths = lam2_paths
+    lam2_paths = lam2_paths,
+    lam1s = lam1s
   ))
 }
