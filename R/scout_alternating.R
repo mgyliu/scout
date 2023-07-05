@@ -67,9 +67,14 @@ compute_rmspe_betamat <- function(X_test, Y_test, intercepts, betamat) {
 #' @param betamat a matrix where each column is a beta_hat estimate for some
 #' regularization parameter
 rescale_betas <- function(X_train, Y_train, betamat) {
-  apply(betamat, MARGIN = 2, FUN = function(beta_hat) {
-    beta_hat * lsfit(X_train %*% beta_hat, Y_train, intercept = FALSE)$coef
+  rescaled <- apply(betamat, MARGIN = 2, FUN = function(beta_hat) {
+    if (all(beta_hat == 0)) {
+      rep(0, length(beta_hat))
+    } else {
+      beta_hat * lsfit(X_train %*% beta_hat, Y_train, intercept = FALSE)$coef
+    }
   })
+  rescaled
 }
 
 # assume: p2 = 1
@@ -309,4 +314,38 @@ scout_alternating_lasso <- function(X_train, Y_train, X_test, Y_test, p1,
     lam2_paths = lam2_paths,
     lam1s = lam1s
   ))
+}
+
+cv.scout_alternating_lasso <- function(X_train, Y_train, X_test, Y_test, p1,
+                                       nlambda1 = 100, nlambda2 = 100,
+                                       lambda1_min_ratio = 0.1, lambda2_min_ratio = 0.001,
+                                       K = 5, tol = 1e-4, max_iter = 10,
+                                       rescale = TRUE, standardize = TRUE,
+                                       lam1_init = "random") {
+  folds <- cv.folds(nrow(X_train), K)
+  # cv.folds returns list of length K where each item is a vector containing
+  # row indices of X_train for the validation set
+
+  apply_res <- lapply(folds, function(validation_idx) {
+    X_train_cv <- X_train[-validation_idx, ]
+    Y_train_cv <- Y_train[-validation_idx, ]
+    X_val <- X_train[validation_idx, ]
+    Y_val <- Y_train[validation_idx, ]
+    scout_alternating_lasso(
+      X_train_cv, Y_train_cv, X_val, Y_val, p1,
+      nlambda1, nlambda2, lambda1_min_ratio, lambda2_min_ratio,
+      tol, max_iter, rescale, standardize, lam1_init
+    )
+  })
+
+  cv_min_errors <- sapply(apply_res, function(scout_alt_res) tail(scout_alt_res$errors, 1))
+  cv_lambda_pairs <- lapply(apply_res, function(scout_alt_res) tail(scout_alt_res$lambda_pairs, 1)[[1]])
+
+  best_lambda_pair <- cv_lambda_pairs[[which.min(cv_min_errors)]]
+
+  scout_alternating_lasso(
+    X_train, Y_train, X_test, Y_test, p1,
+    nlambda1, nlambda2, lambda1_min_ratio, lambda2_min_ratio,
+    tol, max_iter, rescale, standardize, lam1_init
+  )
 }

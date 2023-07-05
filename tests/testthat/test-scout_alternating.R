@@ -79,15 +79,12 @@ test_that("scout_alternating_lasso works for p1 = 1", {
   X_test <- test_data$X_test
   Y_test <- test_data$Y_test
 
-  suppressWarnings({
-    out.random <- scout_alternating_lasso(X_train, Y_train, X_test, Y_test, p1 = 1, lam1_init = "random")
-    out.max <- scout_alternating_lasso(X_train, Y_train, X_test, Y_test, p1 = 1, lam1_init = "max")
-    expected_names <- c("errors", "betas", "intercepts", "lambda_pairs", "lam2_paths")
-    expect_equal(sort(names(out.random)), sort(expected_names))
-    expect_equal(sort(names(out.max)), sort(expected_names))
-  })
+  out.random <- scout_alternating_lasso(X_train, Y_train, X_test, Y_test, p1 = 1, lam1_init = "random")
+  out.max <- scout_alternating_lasso(X_train, Y_train, X_test, Y_test, p1 = 1, lam1_init = "max")
+  expected_names <- c("errors", "betas", "intercepts", "lambda_pairs", "lam2_paths", "lam1s")
+  expect_equal(sort(names(out.random)), sort(expected_names))
+  expect_equal(sort(names(out.max)), sort(expected_names))
 })
-
 
 test_that("scout_alternating_lasso works for p1 = 2", {
   test_data <- make_test_data()
@@ -96,11 +93,22 @@ test_that("scout_alternating_lasso works for p1 = 2", {
   X_test <- test_data$X_test
   Y_test <- test_data$Y_test
 
-  suppressWarnings({
-    out.random <- scout_alternating_lasso(X_train, Y_train, X_test, Y_test, p1 = 2, lam1_init = "random")
-    out.max <- scout_alternating_lasso(X_train, Y_train, X_test, Y_test, p1 = 2, lam1_init = "max")
-    expected_names <- c("errors", "betas", "intercepts", "lambda_pairs", "lam2_paths", "lam1s")
-    expect_equal(sort(names(out.random)), sort(expected_names))
-    expect_equal(sort(names(out.max)), sort(expected_names))
-  })
+  out.random <- scout_alternating_lasso(X_train, Y_train, X_test, Y_test, p1 = 2, lam1_init = "random")
+  out.max <- scout_alternating_lasso(X_train, Y_train, X_test, Y_test, p1 = 2, lam1_init = "max")
+  expected_names <- c("errors", "betas", "intercepts", "lambda_pairs", "lam2_paths", "lam1s")
+  expect_equal(sort(names(out.random)), sort(expected_names))
+  expect_equal(sort(names(out.max)), sort(expected_names))
+})
+
+
+test_that("cv.scout_alternating_lasso works", {
+  test_data <- make_test_data()
+  X_train <- test_data$X_train
+  Y_train <- test_data$Y_train
+  X_test <- test_data$X_test
+  Y_test <- test_data$Y_test
+
+  cv_alt_res <- cv.scout_alternating_lasso(X_train, Y_train, X_test, Y_test, p1 = 1, K = 2, lam1_init = "random")
+  expected_names <- c("errors", "betas", "intercepts", "lambda_pairs", "lam2_paths", "lam1s")
+  expect_equal(sort(names(cv_alt_res)), sort(expected_names))
 })
