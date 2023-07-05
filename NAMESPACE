@@ -3,6 +3,7 @@
 S3method(predict,scoutobject)
 S3method(print,scoutobject)
 export(cv.scout)
+export(cv.scout_alternating_lasso)
 export(glasso_select)
 export(gridge2)
 export(huge_glasso_lambda_seq)

@@ -2,7 +2,7 @@
 % Please edit documentation in R/gridge.R
 \name{gridge2}
 \alias{gridge2}
-\title{"Graphical Ridge"}
+\title{"Graphical Ridge" - TODO there are issues with signs in the svd}
 \usage{
 gridge2(x, rho = c(0), svd_x = list())
 }

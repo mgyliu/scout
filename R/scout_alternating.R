@@ -321,6 +321,13 @@ scout_alternating_lasso <- function(X_train, Y_train, X_test, Y_test, p1,
   ))
 }
 
+#' cv.scout_alternating_lasso
+#' @description implements an alternating search algorithm to efficiently
+#' search over a grid of lambda1 x lambda2. L_p penalty for coefficient
+#' regularization is assumed to be 1 (i.e., p2 = 1). splits training data into
+#' K folds and picks the result corresponding to fold with lowest RMSPE on
+#' validation data.
+#' @export
 cv.scout_alternating_lasso <- function(X_train, Y_train, X_test, Y_test, p1,
                                        nlambda1 = 100, nlambda2 = 100,
                                        lambda1_min_ratio = 0.1, lambda2_min_ratio = 0.001,
