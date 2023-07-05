@@ -1,6 +1,7 @@
 gridge <- function(x, rho = 0, v = NULL, thetas = NULL, u = NULL) {
   x <- x / sqrt(nrow(x) - 1)
   p <- 2 * rho
+  # browser()
   if (is.null(v) || is.null(thetas) || is.null(u)) {
     covarswap <- x %*% t(x)
     eigenswap <- eigen(covarswap)
@@ -9,6 +10,7 @@ gridge <- function(x, rho = 0, v = NULL, thetas = NULL, u = NULL) {
     thetas <- eigenswap$values[keep]
     u <- eigenswap$vectors[, keep]
   }
+
   lambda <- sqrt(4 * p) / 2 # = 2 * sqrt(p) / 2 = sqrt(p)
   diagmat <- (-lambda + (-thetas + sqrt(thetas^2 + 4 * p)) / 2)
   dbar <- .5 * (thetas + sqrt(thetas^2 + 4 * p)) - sqrt(p)
@@ -22,11 +24,12 @@ gridge <- function(x, rho = 0, v = NULL, thetas = NULL, u = NULL) {
     v = v, firstdiag = lambda,
     diagsandwich = (thetas + diagmat)
   )
+  # browser()
   cov_est <- diag(rep(wstuff$firstdiag, ncol(x))) + wstuff$v %*% diag(wstuff$diagsandwich) %*% t(wstuff$v)
   return(list(svdstuff = svdstuff, wistuff = wistuff, wstuff = wstuff, cov_est = cov_est))
 }
 
-#' "Graphical Ridge"
+#' "Graphical Ridge" - TODO there are issues with signs in the svd
 #' @description
 #' `gridge2` computes the closed form solution of \eqn{\Theta^{-1}} which solves
 #' \eqn{\Theta^{-1} - 2\lambda_1 \Theta = X^T X}

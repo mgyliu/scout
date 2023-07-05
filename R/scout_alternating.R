@@ -12,8 +12,11 @@ get_xtxs <- function(X, p1, lam1s) {
     g.out <- huge::huge.glasso(cov(X), lambda = lam1s, verbose = FALSE, cov.output = TRUE)
     return(g.out$cov)
   } else if (p1 == 2) {
-    g.out <- gridge2(X, rho = lam1s)
-    return(g.out$ws)
+    g.out.svd <- gridge(X, rho = lam1s[1])$svdstuff
+    ws <- lapply(lam1s, function(lam1) {
+      gridge(X, rho = lam1, v = g.out.svd$v, thetas = g.out.svd$thetas, u = g.out.svd$u)$cov_est
+    })
+    return(ws)
   } else {
     stop(glue::glue("get_xtxs is not implemented for p1 = {p1}"))
   }
@@ -211,7 +214,7 @@ scout_alternating_lasso <- function(X_train, Y_train, X_test, Y_test, p1,
                                     rescale = TRUE, standardize = TRUE,
                                     lam1_init = "random") {
   # Can only pass in one lam1_init value
-  stopifnot(lam1_init %in% c("random", "max"))
+  stopifnot(lam1_init %in% c("random", "max", "min"))
 
   # Standardize training data if needed
   meany <- mean(Y_train)
@@ -237,8 +240,10 @@ scout_alternating_lasso <- function(X_train, Y_train, X_test, Y_test, p1,
   # Compute inital lambda1
   if (lam1_init == "random") {
     lam1 <- lam1s[sample(1:nlambda1, 1)]
-  } else {
+  } else if (lam1_init == "max") {
     lam1 <- lam1s[1]
+  } else {
+    lam1 <- tail(lam1s, 1)
   }
 
   # Compute initial covariance estimate
