@@ -124,8 +124,8 @@ get_best_lam2_lasso <- function(X_train, Y_train, X_test, Y_test,
 
 get_best_lam1 <- function(X_train, Y_train, X_test, Y_test,
                           meanx, meany, sdx, sdy,
-                          p1, lam1s, lam2, rescale) {
-  xtxs <- get_xtxs(X_train, p1, lam1s)
+                          p1, lam1s, xtxs, lam2, rescale) {
+  # xtxs <- get_xtxs(X_train, p1, lam1s)
   # Initialize beta_hat estimates. The beta_hat for a given lambda2 goes into
   # that lambda2's column index.
   betamat <- matrix(NA, nrow = ncol(X_train), ncol = length(lam1s))
@@ -237,6 +237,8 @@ scout_alternating_lasso <- function(X_train, Y_train, X_test, Y_test, p1,
 
   # Get lambda 1 sequence
   lam1s <- get_lambda1_path(X_train, p1, nlambda1, lambda1_min_ratio)
+  xtxs <- get_xtxs(X_train, p1, lam1s)
+
   # Compute inital lambda1
   if (lam1_init == "random") {
     lam1 <- lam1s[sample(1:nlambda1, 1)]
@@ -247,7 +249,7 @@ scout_alternating_lasso <- function(X_train, Y_train, X_test, Y_test, p1,
   }
 
   # Compute initial covariance estimate
-  cov_x_est <- get_xtxs(X_train, p1, lam1)[[1]]
+  cov_x_est <- xtxs[[1]]
 
   # More to keep track of: errors, betas, intercepts, lambda pairs
   errors <- c()
@@ -294,7 +296,7 @@ scout_alternating_lasso <- function(X_train, Y_train, X_test, Y_test, p1,
     best_lam1_res <- get_best_lam1(
       X_train, Y_train, X_test, Y_test,
       meanx, meany, sdx, sdy,
-      p1, lam1s, best_lam2_res$best_lam2, rescale
+      p1, lam1s, xtxs, best_lam2_res$best_lam2, rescale
     )
     lambda_pairs <- c(lambda_pairs, list(c(best_lam1_res$best_lam1, best_lam2_res$best_lam2)))
     errors <- c(errors, best_lam1_res$error)

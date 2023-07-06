@@ -56,6 +56,7 @@ test_that("get_best_lam1 returns what you expect", {
   test_data <- make_test_data()
   hg <- huge::huge.glasso(cov(test_data$X_train), nlambda = 7, cov.output = TRUE, verbose = FALSE)
   lam1s <- hg$lambda
+  xtxs <- get_xtxs(test_data$X_train, lam1s, p1 = 1)
   lam2 <- lam1s[2]
 
   res <- get_best_lam1(
@@ -63,7 +64,7 @@ test_that("get_best_lam1 returns what you expect", {
     test_data$X_test, test_data$Y_test,
     test_data$meanx, test_data$meany,
     test_data$sdx, test_data$sdy,
-    1, lam1s, lam2,
+    1, lam1s, xtxs, lam2,
     rescale = TRUE
   )
 
