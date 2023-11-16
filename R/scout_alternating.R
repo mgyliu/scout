@@ -268,7 +268,7 @@ scout_alternating_lasso <- function(X_train, Y_train, X_test, Y_test, p1,
   while (diff > tol | niter <= max_iter) {
     niter <- niter + 1
 
-    # Compute best lambda1 for the current cov_x_est
+    # Compute best lambda2 for the current cov_x_est
     lam2s <- get_lambda2_path(X_train, Y_train, cov_x_est, 1, nlambda2, lambda2_min_ratio)
     best_lam2_res <- get_best_lam2_lasso(
       X_train, Y_train, X_test, Y_test,
@@ -329,8 +329,41 @@ scout_alternating_lasso <- function(X_train, Y_train, X_test, Y_test, p1,
 #' regularization is assumed to be 1 (i.e., p2 = 1). splits training data into
 #' K folds and picks the result corresponding to fold with lowest RMSPE on
 #' validation data.
+#' @param X_train A matrix of predictors. Rows are observations and columns
+#' are variables
+#' @param Y_train A vector of outcomes
+#' @param p1 L_p penalty for covariance regularization. must be 1 or 2
+#' @param nlambda1 number of regularization terms to use in covariance
+#' regularization step
+#' @param nlambda2 number of regularization terms to use in coefficient
+#' regularization step
+#' @param lambda1_min_ratio smallest fraction of lambda1_max to include in
+#' lambda1 sequence
+#' @param lambda2_min_ratio smallest fraction of lambda2_max to include in
+#' lambda2 sequence
+#' @param K number of folds to use in cross-validation
+#' @param tol convergence tolerance for difference between previous estimated
+#' rmspe and current estimated rmspe. if the difference becomes smaller than
+#' this value, the algorithm stops and returns the current lam1 and lam2
+#' combination
+#' @param max_iter maximum number of alternating iterations to compute before
+#' stopping. the loop will stop when either the number of iterations exceeds
+#' max_iter, or when the errors converge to have a diff below the tolerance
+#' @param rescale Should coefficients beta obtained by
+#' covariance-regularized regression be re-scaled by a constant, given
+#' by regressing $y$ onto $x beta$? This is done in Witten and
+#' Tibshirani (2008) and is important for good performance. Default is
+#' TRUE.
+#' @param standardize whether or not to scale the training X and Y data
+#' before performing estimation
+#' @param lam1_init one of "random" or "max"
+#' @return a list with two objects:
+#' * mod: the scout object from fitting the full X_train and Y_test with
+#'   scout(p1, 1) using the best lambdas from the cross-validation
+#' * best_cv_res: a list with the results of the cross-validation fold with
+#'   the lowest cross-validation error
 #' @export
-cv.scout_alternating_lasso <- function(X_train, Y_train, X_test, Y_test, p1,
+cv.scout_alternating_lasso <- function(X_train, Y_train, p1,
                                        nlambda1 = 100, nlambda2 = 100,
                                        lambda1_min_ratio = 0.1, lambda2_min_ratio = 0.001,
                                        K = 5, tol = 1e-4, max_iter = 10,
@@ -353,13 +386,16 @@ cv.scout_alternating_lasso <- function(X_train, Y_train, X_test, Y_test, p1,
   })
 
   cv_min_errors <- sapply(apply_res, function(scout_alt_res) tail(scout_alt_res$errors, 1))
-  cv_lambda_pairs <- lapply(apply_res, function(scout_alt_res) tail(scout_alt_res$lambda_pairs, 1)[[1]])
+  best_res_idx <- which.min(cv_min_errors)
+  best_res <- apply_res[[best_res_idx]]
+  best_lambda_pair <- unlist(tail(best_res$lambda_pairs, 1))
 
-  best_lambda_pair <- cv_lambda_pairs[[which.min(cv_min_errors)]]
-
-  scout_alternating_lasso(
-    X_train, Y_train, X_test, Y_test, p1,
-    nlambda1, nlambda2, lambda1_min_ratio, lambda2_min_ratio,
-    tol, max_iter, rescale, standardize, lam1_init
+  list(
+    mod = scout(
+      X_train, Y_train,
+      p1 = p1, p2 = 1,
+      lam1s = best_lambda_pair[1], lam2s = best_lambda_pair[2]
+    ),
+    best_cv_res = best_res
   )
 }

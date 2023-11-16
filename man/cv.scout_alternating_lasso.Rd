@@ -7,8 +7,6 @@
 cv.scout_alternating_lasso(
   X_train,
   Y_train,
-  X_test,
-  Y_test,
   p1,
   nlambda1 = 100,
   nlambda2 = 100,
@@ -21,6 +19,55 @@ cv.scout_alternating_lasso(
   standardize = TRUE,
   lam1_init = "random"
 )
+}
+\arguments{
+\item{X_train}{A matrix of predictors. Rows are observations and columns
+are variables}
+
+\item{Y_train}{A vector of outcomes}
+
+\item{p1}{L_p penalty for covariance regularization. must be 1 or 2}
+
+\item{nlambda1}{number of regularization terms to use in covariance
+regularization step}
+
+\item{nlambda2}{number of regularization terms to use in coefficient
+regularization step}
+
+\item{lambda1_min_ratio}{smallest fraction of lambda1_max to include in
+lambda1 sequence}
+
+\item{lambda2_min_ratio}{smallest fraction of lambda2_max to include in
+lambda2 sequence}
+
+\item{K}{number of folds to use in cross-validation}
+
+\item{tol}{convergence tolerance for difference between previous estimated
+rmspe and current estimated rmspe. if the difference becomes smaller than
+this value, the algorithm stops and returns the current lam1 and lam2
+combination}
+
+\item{max_iter}{maximum number of alternating iterations to compute before
+stopping. the loop will stop when either the number of iterations exceeds
+max_iter, or when the errors converge to have a diff below the tolerance}
+
+\item{rescale}{Should coefficients beta obtained by
+covariance-regularized regression be re-scaled by a constant, given
+by regressing $y$ onto $x beta$? This is done in Witten and
+Tibshirani (2008) and is important for good performance. Default is
+TRUE.}
+
+\item{standardize}{whether or not to scale the training X and Y data
+before performing estimation}
+
+\item{lam1_init}{one of "random" or "max"}
+}
+\value{
+a list with two objects:
+* mod: the scout object from fitting the full X_train and Y_test with
+  scout(p1, 1) using the best lambdas from the cross-validation
+* best_cv_res: a list with the results of the cross-validation fold with
+  the lowest cross-validation error
 }
 \description{
 implements an alternating search algorithm to efficiently

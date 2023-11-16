@@ -106,10 +106,12 @@ test_that("cv.scout_alternating_lasso works", {
   test_data <- make_test_data()
   X_train <- test_data$X_train
   Y_train <- test_data$Y_train
-  X_test <- test_data$X_test
-  Y_test <- test_data$Y_test
+  # X_test <- test_data$X_test
+  # Y_test <- test_data$Y_test
 
-  cv_alt_res <- cv.scout_alternating_lasso(X_train, Y_train, X_test, Y_test, p1 = 1, K = 2, lam1_init = "random")
-  expected_names <- c("errors", "betas", "intercepts", "lambda_pairs", "lam2_paths", "lam1s")
+  cv_alt_res <- cv.scout_alternating_lasso(X_train, Y_train, p1 = 1, K = 2, lam1_init = "random")
+
+  expected_names <- c("mod", "best_cv_res")
   expect_equal(sort(names(cv_alt_res)), sort(expected_names))
+  expect_equal(class(cv_alt_res$mod), "scoutobject")
 })
